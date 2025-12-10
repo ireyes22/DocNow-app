@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
+import { ScrollView } from 'react-native';
 
 const PrimaryColor = '#0A3B74';
 
@@ -44,6 +45,30 @@ const Home = () => {
     }
   ];
 
+  const appointments = [
+    {
+      id: 1,
+      doctor: "Juan Perez",
+      image: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg",
+      date: "13 Sept. 2022",
+      hour: "10:00 AM"
+    },
+    {
+      id: 2,
+      doctor: "Maria Lopez",
+      image: "https://cdn.agenciasinc.es/var/ezwebin_site/storage/images/_aliases/img_1col/noticias/solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales/3405721-5-esl-MX/Solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales.jpg",
+      date: "15 Sept. 2022",
+      hour: "03:30 PM"
+    },
+    {
+      id: 3,
+      doctor: "Araceli Young",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPd1ag04qAxUqyFsA1waifXN9eNnce45gdKQ&s",
+      date: "20 Sept. 2022",
+      hour: "08:00 AM"
+    }
+  ];
+
   //funcion para renderizar servicios
   const renderService = (item) => (
     <TouchableOpacity key={item.id} style={styles.serviceContainer}>
@@ -67,90 +92,95 @@ const Home = () => {
     </TouchableOpacity>
   );
 
-  return (
-    <View style={styles.container}>
-      {/*header*/}
-      <View style={styles.header}>
-        <TouchableOpacity>
-          <Ionicons name="arrow-back-outline" size={24} color="black" />
-        </TouchableOpacity>
-
-        <Image 
-          source={require('../assets/logoDocNow.png')} 
-          style={{ width: 30, height: 30 }}
-        />
-
-        <TouchableOpacity>
-          <Ionicons name="settings-outline" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
-
-      {/*barra de busqueda*/}
-      <View style={styles.searchBox}>
-        <Ionicons 
-          name="search-outline" 
-          size={20} 
-          color={PrimaryColor}
-          style={{ marginRight: 8 }}
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Buscar"
-          placeholderTextColor={PrimaryColor}
-          onChangeText={setSearch}
-          value={search}
-        />
-      </View>
-
-      <TouchableOpacity style={styles.servicesRow}>
-        <Text style={styles.textServices}>Servicios</Text>
-        <Ionicons name="arrow-forward-outline" size={24} color={PrimaryColor} />
-      </TouchableOpacity>
-
-      {/*generar servicios*/}
-      <View style={styles.servicesGrid}>
-        {services.map(renderService)}
-      </View>
-
-      <Text style={styles.textDoctors}>Medicos destacados</Text>
-
-      {/* agregar top doctores */}
-      <View style={styles.servicesGrid}>
-        {doctors.map(renderDoctor)}
-      </View>
-
-      <Text style={styles.textDoctors}>Próximas citas</Text>
-
-      {/* citas del paciente */}
-      <View style={styles.appointmentCard}>
-        {/* Barra azul izquierda */}
+  //función para renderizar cada tarjeta
+    const renderAppointment = (item) => (
+      <View key={item.id} style={styles.appointmentCard}>
+        
+        {/* barra azul izquierda */}
         <View style={styles.leftBar} />
-
-        {/* Datos del doctor */}
+  
+        {/* info doctor */}
         <View style={styles.doctorInfo}>
-          <Image
-            source={{ uri: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg" }}
-            style={styles.appointmentImage}
-          />
-          <View>
-            <Text style={styles.doctorName}>Dr. Juan Hernandez</Text>
-          </View>
+          <Image source={{ uri: item.image }} style={styles.appointmentImage} />
+          <Text style={styles.doctorName} numberOfLines={1} ellipsizeMode="tail">
+            Dr. {item.doctor}
+          </Text>
         </View>
-
-        {/* Línea divisora */}
+  
+        {/* linea divisora */}
         <View style={styles.divider} />
-
-        {/* Fecha */}
+  
+        {/* fecha */}
         <View style={styles.dateInfo}>
           <Ionicons name="calendar-outline" size={24} color={PrimaryColor} />
-          <Text style={styles.dateText}>13 Sept. 2022</Text>
-          <Text style={styles.hourText}>10:00 AM</Text>
+          <Text style={styles.dateText}>{item.date}</Text>
+          <Text style={styles.hourText}>{item.hour}</Text>
         </View>
       </View>
+    );
 
-      <StatusBar style="auto" />
-    </View>
+  return (
+    <ScrollView contentContainerStyle={styles.scroll}>
+      <View style={styles.container}>
+        {/*header*/}
+        <View style={styles.header}>
+          <TouchableOpacity>
+            <Ionicons name="arrow-back-outline" size={24} color="black" />
+          </TouchableOpacity>
+
+          <Image 
+            source={require('../assets/logoDocNow.png')} 
+            style={{ width: 30, height: 30 }}
+          />
+
+          <TouchableOpacity>
+            <Ionicons name="settings-outline" size={24} color="black" />
+          </TouchableOpacity>
+        </View>
+
+        {/*barra de busqueda*/}
+        <View style={styles.searchBox}>
+          <Ionicons 
+            name="search-outline" 
+            size={20} 
+            color={PrimaryColor}
+            style={{ marginRight: 8 }}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Buscar"
+            placeholderTextColor={PrimaryColor}
+            onChangeText={setSearch}
+            value={search}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.servicesRow}>
+          <Text style={styles.textServices}>Servicios</Text>
+          <Ionicons name="arrow-forward-outline" size={24} color={PrimaryColor} />
+        </TouchableOpacity>
+
+        {/*generar servicios*/}
+        <View style={styles.servicesGrid}>
+          {services.map(renderService)}
+        </View>
+
+        <Text style={styles.textDoctors}>Medicos destacados</Text>
+
+        {/* agregar top doctores */}
+        <View style={styles.servicesGrid}>
+          {doctors.map(renderDoctor)}
+        </View>
+
+        <Text style={styles.textDoctors}>Próximas citas</Text>
+
+        {/* citas del paciente */}
+        {appointments.map(renderAppointment)}
+
+        <StatusBar style="auto" />
+      </View>
+    </ScrollView>
   );
 };
 
@@ -244,17 +274,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   appointmentCard: {
-  width: '90%',
-  backgroundColor: '#fff',
-  flexDirection: 'row',
-  alignItems: 'center',
-  borderRadius: 10,
-  elevation: 3, // sombra Android
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  marginBottom: 20,
+    width: '90%',
+    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    elevation: 3, // sombra Android
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    marginBottom: 20,
   },
   leftBar: {
     width: 8,
