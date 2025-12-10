@@ -4,11 +4,11 @@
     "slug": "DocNow",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logoDocNow.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logoDocNow.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,13 +17,19 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/logoDocNow.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.ireyes_22.DocNow"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/logoDocNow.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a6314fa4-e768-4a7a-9205-4ff0e3ea6294"
+      }
     }
   }
 }
