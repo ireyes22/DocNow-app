@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/logoDocNow.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
     "splash": {
       "image": "./assets/logoDocNow.png",
       "resizeMode": "contain",
