@@ -32,7 +32,7 @@ const Notifications = () => {
     }
   ];
 
-   //función para renderizar cada tarjeta
+   //funcion para renderizar cada tarjeta
   const renderAppointment = (item) => (
     <View key={item.id} style={styles.appointmentCard}>
       
