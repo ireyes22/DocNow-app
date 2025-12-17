@@ -3,10 +3,13 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import Settings from '../Settings';
 
 const PrimaryColor = '#0A3B74';
 
 const Notifications = () => {
+  const navigation = useNavigation();
 
   const appointments = [
     {
@@ -69,11 +72,11 @@ const Notifications = () => {
           </TouchableOpacity>
 
           <Image 
-            source={require('../assets/logoDocNow.png')} 
+            source={require('../../assets/logoDocNow.png')} 
             style={{ width: 30, height: 30 }}
           />
 
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
             <Ionicons name="settings-outline" size={24} color="black" />
           </TouchableOpacity>
         </View>

@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import React, { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import Settings from '../Settings';
 
 const PrimaryColor = '#0A3B74';
 const SecondaryColor = '#498FC0';
@@ -22,6 +24,7 @@ LocaleConfig.defaultLocale = 'es';
   
 // pantalla de mis citas
 const MyAppointments = () => {
+
   const [selected, setSelected] = useState("2022-09-13");
 
   //datos para el calendario
@@ -121,6 +124,7 @@ const MyAppointments = () => {
 
 // pantalla de citas archivadas
 const ArchivedAppointments = () => {
+
   const archivades = [
     {
       id: 1,
@@ -327,6 +331,7 @@ const styles = StyleSheet.create({
 const Tab = createMaterialTopTabNavigator();
 
 function MyTabs() {
+  const navigation = useNavigation();
   return (
     <View style={{flex: 1, backgroundColor: '#fff',}}>
       {/*header*/}
@@ -336,11 +341,11 @@ function MyTabs() {
         </TouchableOpacity>
 
         <Image 
-          source={require('../assets/logoDocNow.png')} 
+          source={require('../../assets/logoDocNow.png')} 
           style={{ width: 30, height: 30 }}
         />
 
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
           <Ionicons name="settings-outline" size={24} color="black" />
         </TouchableOpacity>
       </View>

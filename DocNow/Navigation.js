@@ -1,19 +1,54 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createStackNavigator } from "@react-navigation/stack";
 import { Ionicons } from '@expo/vector-icons';
 
+// screens comunes
+import Settings from './screens/Settings';
 
-// screens
-import Home from "./screens/Home";
-import Appointment from "./screens/Appointment";
-import Notifications from "./screens/Notifications";
-import Profile from "./screens/Profile";
+// screens pacientes
+import HomePatient from "./screens/patients/Home";
+import Appointment from "./screens/patients/Appointment";
+import Notifications from "./screens/patients/Notifications";
+import Profile from "./screens/patients/Profile";
+
+// screens doctores
+
+// screens administrador
 
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
 const PrimaryColor = '#0A3B74';
 const SecondaryColor = '#498FC0';
+
+function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Home" component={HomePatient} />
+      <Stack.Screen name="Settings" component={Settings} />
+    </Stack.Navigator>
+  );
+}
+
+function AppointmentStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Appointment" component={Appointment} />
+      <Stack.Screen name="Settings" component={Settings} />
+    </Stack.Navigator>
+  );
+}
+
+function NotificationsStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Notifications" component={Notifications} />
+      <Stack.Screen name="Settings" component={Settings} />
+    </Stack.Navigator>
+  );
+}
   
 function MyTabs() {
   return (
@@ -27,7 +62,7 @@ function MyTabs() {
     >
       <Tab.Screen 
         name="Home" 
-        component={Home} 
+        component={HomeStack} 
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" color={color} size={size} />
@@ -36,7 +71,7 @@ function MyTabs() {
       />
       <Tab.Screen 
         name="Citas" 
-        component={Appointment} 
+        component={AppointmentStack} 
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar" color={color} size={size} />
@@ -45,7 +80,7 @@ function MyTabs() {
       />
       <Tab.Screen 
         name="Notificaciones" 
-        component={Notifications} 
+        component={NotificationsStack} 
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="notifications" color={color} size={size} />
