@@ -12,6 +12,11 @@ import HomePatient from "./screens/patients/Home";
 import Appointment from "./screens/patients/Appointment";
 import Notifications from "./screens/patients/Notifications";
 import Profile from "./screens/patients/Profile";
+import SeeDoctor from "./screens/patients/SeeDoctor";
+import RegisterAppointment from "./screens/patients/RegisterAppointment";
+import Pay from "./screens/patients/Pay";
+import infoPay from "./screens/patients/InfoPay";
+import Ready from "./screens/patients/Ready";
 
 // screens doctores
 
@@ -27,6 +32,11 @@ function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomePatient} />
+      <Stack.Screen name="SeeDoctor" component={SeeDoctor} />
+      <Stack.Screen name="RegisterAppointment" component={RegisterAppointment} />
+      <Stack.Screen name="Pay" component={Pay} />
+      <Stack.Screen name="InfoPay" component={infoPay} />
+      <Stack.Screen name="Ready" component={Ready} />
       <Stack.Screen name="Settings" component={Settings} />
     </Stack.Navigator>
   );

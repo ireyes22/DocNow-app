@@ -15,6 +15,7 @@ const Notifications = () => {
     {
       id: 1,
       doctor: "Juan Perez",
+      sex: "male",
       image: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg",
       date: "13 Sept. 2022",
       hour: "10:00 AM"
@@ -22,6 +23,7 @@ const Notifications = () => {
     {
       id: 2,
       doctor: "Maria Lopez",
+      sex: "female",
       image: "https://cdn.agenciasinc.es/var/ezwebin_site/storage/images/_aliases/img_1col/noticias/solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales/3405721-5-esl-MX/Solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales.jpg",
       date: "15 Sept. 2022",
       hour: "03:30 PM"
@@ -29,6 +31,7 @@ const Notifications = () => {
     {
       id: 3,
       doctor: "Araceli Young",
+      sex: "female",
       image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPd1ag04qAxUqyFsA1waifXN9eNnce45gdKQ&s",
       date: "20 Sept. 2022",
       hour: "08:00 AM"
@@ -46,7 +49,7 @@ const Notifications = () => {
       <View style={styles.doctorInfo}>
         <Image source={{ uri: item.image }} style={styles.appointmentImage} />
         <Text style={styles.doctorName} numberOfLines={1} ellipsizeMode="tail">
-          Dr. {item.doctor}
+          {item.sex === "female" ? "Dra." : "Dr."} {item.doctor}
         </Text>
       </View>
 
