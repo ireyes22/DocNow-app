@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import Settings from '../Settings';
+import SeeDoctor from './SeeDoctor';
 
 const PrimaryColor = '#0A3B74';
 
@@ -34,17 +35,32 @@ const Home = () => {
     {
       id: 1,
       name: "Juan Perez",
-      image: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg"
+      phone: "3453535345",
+      email: "ejemplo@gmail.com",
+      sex: "male",
+      image: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg",
+      specialty: 'Internista',
+      clinic: "Consultorio 1",
     },
     {
       id: 2,
       name: "Maria Lopez",
-      image: "https://cdn.agenciasinc.es/var/ezwebin_site/storage/images/_aliases/img_1col/noticias/solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales/3405721-5-esl-MX/Solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales.jpg"
+      phone: "3453535345",
+      email: "ejemplo@gmail.com",
+      sex: "female",
+      image: "https://cdn.agenciasinc.es/var/ezwebin_site/storage/images/_aliases/img_1col/noticias/solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales/3405721-5-esl-MX/Solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales.jpg",
+      specialty: 'Internista',
+      clinic: "Consultorio 2",
     },
     {
       id: 3,
       name: "Araceli Young",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPd1ag04qAxUqyFsA1waifXN9eNnce45gdKQ&s"
+      phone: "3453535345",
+      email: "ejemplo@gmail.com",
+      sex: "female",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPd1ag04qAxUqyFsA1waifXN9eNnce45gdKQ&s",
+      specialty: 'Internista',
+      clinic: "Consultorio 3",
     }
   ];
 
@@ -52,6 +68,7 @@ const Home = () => {
     {
       id: 1,
       doctor: "Juan Perez",
+      sex: "male",
       image: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg",
       date: "13 Sept. 2022",
       hour: "10:00 AM"
@@ -59,6 +76,7 @@ const Home = () => {
     {
       id: 2,
       doctor: "Maria Lopez",
+      sex: "female",
       image: "https://cdn.agenciasinc.es/var/ezwebin_site/storage/images/_aliases/img_1col/noticias/solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales/3405721-5-esl-MX/Solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales.jpg",
       date: "15 Sept. 2022",
       hour: "03:30 PM"
@@ -66,6 +84,7 @@ const Home = () => {
     {
       id: 3,
       doctor: "Araceli Young",
+      sex: "female",
       image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPd1ag04qAxUqyFsA1waifXN9eNnce45gdKQ&s",
       date: "20 Sept. 2022",
       hour: "08:00 AM"
@@ -85,7 +104,12 @@ const Home = () => {
   );
 
   const renderDoctor = (item) => (
-    <TouchableOpacity key={item.id} style={styles.doctorContainer}>
+    <TouchableOpacity key={item.id} style={styles.doctorContainer}  
+      onPress={() =>
+        navigation.navigate("SeeDoctor", {
+          doctor: item,
+        })
+    }>
       <Image
         source={{ uri: item.image }}
         style={styles.doctorsImage}
@@ -106,7 +130,7 @@ const Home = () => {
         <View style={styles.doctorInfo}>
           <Image source={{ uri: item.image }} style={styles.appointmentImage} />
           <Text style={styles.doctorName} numberOfLines={1} ellipsizeMode="tail">
-            Dr. {item.doctor}
+            {item.sex === "female" ? "Dra." : "Dr."} {item.doctor}
           </Text>
         </View>
   
@@ -282,7 +306,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 10,
-    elevation: 3, // sombra Android
+    elevation: 3, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
