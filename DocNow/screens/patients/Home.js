@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import Settings from '../Settings';
 import SeeDoctor from './SeeDoctor';
+import Login from  '../Login';
 
 const PrimaryColor = '#0A3B74';
 
@@ -151,7 +152,7 @@ const Home = () => {
       <View style={styles.container}>
         {/*header*/}
         <View style={styles.header}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
             <Ionicons name="arrow-back-outline" size={24} color="black" />
           </TouchableOpacity>
 

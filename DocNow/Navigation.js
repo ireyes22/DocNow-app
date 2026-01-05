@@ -6,6 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 // screens comunes
 import Settings from './screens/Settings';
+import Login from "./screens/Login";
+import Register from "./screens/Register";
 
 // screens pacientes
 import HomePatient from "./screens/patients/Home";
@@ -24,9 +26,20 @@ import Ready from "./screens/patients/Ready";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
+const RootStack = createStackNavigator();
 
 const PrimaryColor = '#0A3B74';
 const SecondaryColor = '#498FC0';
+
+function AuthStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="Register" component={Register} />
+      <Stack.Screen name="Main" component={MyTabs} />
+    </Stack.Navigator>
+  );
+}
 
 function HomeStack() {
   return (
@@ -110,10 +123,23 @@ function MyTabs() {
   );
 }
 
+function AppStack() {
+  return <MyTabs />;
+}
+
 export default function Navigation() {
+
+  const isLoggedIn = false;
+
   return (
     <NavigationContainer>
-      <MyTabs />
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        {isLoggedIn ? (
+          <RootStack.Screen name="App" component={AppStack} />
+        ) : (
+          <RootStack.Screen name="Auth" component={AuthStack} />
+        )}
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }
