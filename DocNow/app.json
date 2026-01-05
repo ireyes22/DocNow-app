@@ -17,7 +17,8 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logoDocNow.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "googleServicesFile": "./android/app/google-services.json"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.ireyes_22.DocNow"

@@ -4,26 +4,43 @@
   "main": "index.js",
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-community/datetimepicker": "^8.5.1",
     "@react-native-masked-view/masked-view": "0.3.2",
+    "@react-native-picker/picker": "^2.11.4",
     "@react-navigation/bottom-tabs": "^7.8.12",
     "@react-navigation/material-top-tabs": "^7.4.9",
     "@react-navigation/native": "^7.1.25",
     "@react-navigation/stack": "^7.6.11",
-    "expo": "~54.0.26",
+    "babel-plugin-inline-dotenv": "^1.7.0",
+    "babel-preset-expo": "~54.0.9",
+    "dotenv": "^17.2.3",
     "expo-status-bar": "~3.0.8",
+    "firebase": "^12.7.0",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-calendars": "^1.1313.0",
+    "react-native-dotenv": "^3.4.11",
     "react-native-elements": "^3.4.3",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-pager-view": "6.9.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@babel/preset-env": "^7.28.5",
+    "@babel/preset-react": "^7.28.5",
+    "@react-native-community/cli": "^20.0.2",
+    "@react-native/metro-config": "^0.83.1",
+    "expo": "^54.0.30",
+    "metro": "^0.83.3",
+    "metro-config": "^0.83.3",
+    "metro-core": "^0.83.3",
+    "metro-react-native-babel-preset": "^0.77.0"
+  }
 }
