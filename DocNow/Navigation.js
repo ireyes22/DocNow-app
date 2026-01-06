@@ -21,6 +21,7 @@ import Pay from "./screens/patients/Pay";
 import infoPay from "./screens/patients/InfoPay";
 import Ready from "./screens/patients/Ready";
 import Rating from "./screens/patients/Rating";
+import Confirm from "./screens/patients/Confirm";
 
 // screens doctores
 
@@ -72,6 +73,7 @@ function NotificationsStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Notifications" component={Notifications} />
+      <Stack.Screen name="Confirm" component={Confirm} />
       <Stack.Screen name="Settings" component={Settings} />
     </Stack.Navigator>
   );
