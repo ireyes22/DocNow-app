@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Settings from './screens/Settings';
 import Login from "./screens/Login";
 import Register from "./screens/Register";
+import ForgetPassword from "./screens/ForgetPassword";
 
 // screens pacientes
 import HomePatient from "./screens/patients/Home";
@@ -36,6 +37,7 @@ function AuthStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Register" component={Register} />
+      <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
       <Stack.Screen name="Main" component={MyTabs} />
     </Stack.Navigator>
   );
