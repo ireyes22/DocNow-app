@@ -3,55 +3,30 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Settings from '../Settings';
-import Confirm from './Confirm';
 
 const PrimaryColor = '#0A3B74';
+const DangerColor = "#8B0000";
 
-const Notifications = () => {
+const Confirm = () => {
   const navigation = useNavigation();
-
-  const appointments = [
-    {
-      id: 1,
-      name: "Juan Perez",
-      sex: "male",
-      image: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg",
-      date: "13 Sept. 2022",
-      hour: "10:00 AM"
-    },
-    {
-      id: 2,
-      name: "Maria Lopez",
-      sex: "female",
-      image: "https://cdn.agenciasinc.es/var/ezwebin_site/storage/images/_aliases/img_1col/noticias/solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales/3405721-5-esl-MX/Solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales.jpg",
-      date: "15 Sept. 2022",
-      hour: "03:30 PM"
-    },
-    {
-      id: 3,
-      name: "Araceli Young",
-      sex: "female",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPd1ag04qAxUqyFsA1waifXN9eNnce45gdKQ&s",
-      date: "20 Sept. 2022",
-      hour: "08:00 AM"
-    }
-  ];
+    const route = useRoute();
+  
+    const { doctor } = route.params;
 
    //funcion para renderizar cada tarjeta
-  const renderAppointment = (item) => (
-    <TouchableOpacity onPress={() => navigation.navigate("Confirm", { doctor: item })}>
-    <View key={item.id} style={styles.appointmentCard}>
+  const renderAppointment = (doctor) => (
+    <View key={doctor.id} style={styles.appointmentCard}>
       
       {/* barra azul izquierda */}
       <View style={styles.leftBar} />
 
       {/* info doctor */}
       <View style={styles.doctorInfo}>
-        <Image source={{ uri: item.image }} style={styles.appointmentImage} />
+        <Image source={{ uri: doctor.image }} style={styles.appointmentImage} />
         <Text style={styles.doctorName} numberOfLines={1} ellipsizeMode="tail">
-          {item.sex === "female" ? "Dra." : "Dr."} {item.name}
+          {doctor.sex === "female" ? "Dra." : "Dr."} {doctor.name}
         </Text>
       </View>
 
@@ -61,11 +36,10 @@ const Notifications = () => {
       {/* fecha */}
       <View style={styles.dateInfo}>
         <Ionicons name="calendar-outline" size={24} color={PrimaryColor} />
-        <Text style={styles.dateText}>{item.date}</Text>
-        <Text style={styles.hourText}>{item.hour}</Text>
+        <Text style={styles.dateText}>{doctor.date}</Text>
+        <Text style={styles.hourText}>{doctor.hour}</Text>
       </View>
     </View>
-    </TouchableOpacity>
   );
 
   return (
@@ -87,10 +61,18 @@ const Notifications = () => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.textDoctors}>Notificaciones</Text>
+        <Text style={styles.textDoctors}>Confirmar cita</Text>
 
-        {appointments.map(renderAppointment)}
+        {renderAppointment(doctor)}
 
+        <TouchableOpacity style={styles.confirmButton} onPress={() => setEditMode(true)}>
+            <Text style={styles.confirmButtonText}>Confirmar</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.cancelButtonText}>Cancelar</Text>
+        </TouchableOpacity>
+        
         <StatusBar style="auto" />
       </ScrollView>
     </View>
@@ -186,6 +168,35 @@ const styles = StyleSheet.create({
     marginTop: 3,
     color: '#000',
   },
+  confirmButton: {
+    marginTop: 25,
+    width: "90%",
+    backgroundColor: PrimaryColor,
+    padding: 15,
+    borderRadius: 10,
+    marginTop: "75%",
+    alignItems: "center",
+  },
+  confirmButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  cancelButton: {
+    marginTop: 15,
+    width: "90%",
+    backgroundColor: DangerColor,
+    borderRadius: 10,
+    padding: 15,
+    borderWidth: 2,
+    borderColor: DangerColor,
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600",
+  },
 });
 
-export default Notifications;
+export default Confirm;
