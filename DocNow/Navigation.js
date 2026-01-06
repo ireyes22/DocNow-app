@@ -20,6 +20,7 @@ import RegisterAppointment from "./screens/patients/RegisterAppointment";
 import Pay from "./screens/patients/Pay";
 import infoPay from "./screens/patients/InfoPay";
 import Ready from "./screens/patients/Ready";
+import Rating from "./screens/patients/Rating";
 
 // screens doctores
 
@@ -61,6 +62,7 @@ function AppointmentStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Appointment" component={Appointment} />
+      <Stack.Screen name="Rating" component={Rating} />
       <Stack.Screen name="Settings" component={Settings} />
     </Stack.Navigator>
   );
@@ -137,7 +139,9 @@ export default function Navigation() {
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {isLoggedIn ? (
-          <RootStack.Screen name="App" component={AppStack} />
+          <>
+            <RootStack.Screen name="App" component={AppStack} />
+          </>
         ) : (
           <RootStack.Screen name="Auth" component={AuthStack} />
         )}

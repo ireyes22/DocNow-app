@@ -6,6 +6,9 @@ import { Calendar, LocaleConfig } from 'react-native-calendars';
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import Settings from '../Settings';
+import Rating from './Rating';
+import { createStackNavigator } from '@react-navigation/stack';
+
 
 const PrimaryColor = '#0A3B74';
 const SecondaryColor = '#498FC0';
@@ -124,6 +127,7 @@ const MyAppointments = () => {
 
 // pantalla de citas archivadas
 const ArchivedAppointments = () => {
+  const navigation = useNavigation();
 
   const archivades = [
     {
@@ -187,7 +191,17 @@ const ArchivedAppointments = () => {
 
       {/* boton */}
       <View style={styles.dateInfo}>
-        <TouchableOpacity style={styles.evaluateButton}>
+        <TouchableOpacity style={styles.evaluateButton} 
+         onPress={() =>
+          navigation.navigate("Rating", {
+            doctor: {
+              name: item.doctor,
+              image: item.image,
+              sex: item.sex,
+              service: item.service,
+            }
+          })} 
+        >
           <Text style={styles.evaluateText}>Evaluar</Text>
         </TouchableOpacity>
       </View>
@@ -365,13 +379,16 @@ function MyTabs() {
             ),
           }}
         />
-        <Tab.Screen name='Archivado' component={ArchivedAppointments} 
+        <Tab.Screen 
+          name='Archivado' 
+          component={ArchivedAppointments} 
           options={{
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="archive" color={color} size={size} />
             ),
           }}
         />
+
       </Tab.Navigator>
     </View>
   );
