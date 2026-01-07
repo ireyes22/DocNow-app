@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -24,6 +24,10 @@ import Rating from "./screens/patients/Rating";
 import Confirm from "./screens/patients/Confirm";
 
 // screens doctores
+import Appointments from "./screens/doctors/Appointments";
+import Patients from "./screens/doctors/Patients";
+import ProfileDoc from "./screens/doctors/Profile";
+import NotificationsDoc from "./screens/doctors/Notifications";
 
 // screens administrador
 
@@ -40,12 +44,12 @@ function AuthStack() {
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Register" component={Register} />
       <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
-      <Stack.Screen name="Main" component={MyTabs} />
+      <Stack.Screen name="Main" component={PatientTabs} />
     </Stack.Navigator>
   );
 }
 
-function HomeStack() {
+function PatientStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomePatient} />
@@ -78,8 +82,17 @@ function NotificationsStack() {
     </Stack.Navigator>
   );
 }
+
+function DoctorStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="DoctorTabs" component={DoctorTabs} />
+      <Stack.Screen name="Settings" component={Settings} />
+    </Stack.Navigator>
+  );
+}
   
-function MyTabs() {
+function PatientTabs() {
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -91,7 +104,7 @@ function MyTabs() {
     >
       <Tab.Screen 
         name="Home" 
-        component={HomeStack} 
+        component={PatientStack} 
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" color={color} size={size} />
@@ -129,25 +142,116 @@ function MyTabs() {
   );
 }
 
+function DoctorTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarInactiveTintColor: PrimaryColor,
+        tabBarActiveTintColor: SecondaryColor,
+      }}
+    >
+      <Tab.Screen
+        name="Pacientes"
+        component={Patients}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="people" color={color} size={size} />
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="Citas"
+        component={Appointments}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar" color={color} size={size} />
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="Notificaciones"
+        component={NotificationsDoc}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="notifications" color={color} size={size} />
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="Perfil"
+        component={ProfileDoc}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person" color={color} size={size} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
 function AppStack() {
-  return <MyTabs />;
+  return <PatientTabs />;
 }
 
 export default function Navigation() {
 
-  const isLoggedIn = false;
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [userRole, setUserRole] = useState("doctor"); // "patient" | "doctor"
 
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        {isLoggedIn ? (
-          <>
-            <RootStack.Screen name="App" component={AppStack} />
-          </>
+
+        {!isLoggedIn ? (
+          <RootStack.Screen name="Auth">
+            {(props) => (
+              <AuthStack
+                {...props}
+                onLoginPatient={() => {
+                  setIsLoggedIn(true);
+                  setUserRole("patient");
+                }}
+                onLoginDoctor={() => {
+                  setIsLoggedIn(true);
+                  setUserRole("doctor");
+                }}
+              />
+            )}
+          </RootStack.Screen>
+        ) : userRole === "patient" ? (
+          <RootStack.Screen name="PatientApp">
+            {(props) => (
+              <PatientStack
+                {...props}
+                onLogout={() => {
+                  setIsLoggedIn(false);
+                  setUserRole(null);
+                }}
+              />
+            )}
+          </RootStack.Screen>
         ) : (
-          <RootStack.Screen name="Auth" component={AuthStack} />
+          <RootStack.Screen name="DoctorApp">
+            {(props) => (
+              <DoctorStack
+                {...props}
+                onLogout={() => {
+                  setIsLoggedIn(false);
+                  setUserRole(null);
+                }}
+              />
+            )}
+          </RootStack.Screen>
         )}
+
       </RootStack.Navigator>
     </NavigationContainer>
   );
 }
+
+
