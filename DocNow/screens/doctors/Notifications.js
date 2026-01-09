@@ -40,63 +40,63 @@ const Notifications = () => {
     }
   ];
 
-     //funcion para renderizar cada tarjeta
-    const renderAppointment = (item) => (
-      <View key={item.id} style={styles.appointmentCard}>
-        
-        {/* barra azul izquierda */}
-        <View style={styles.leftBar} />
-  
-        {/* info doctor */}
-        <View style={styles.doctorInfo}>
-          <Image source={{ uri: item.image }} style={styles.appointmentImage} />
-          <View>
-            <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
-                {item.name}
-            </Text>
-            <Text>{item.status}</Text>
-          </View>
-        </View>
-  
-        {/* linea divisora */}
-        <View style={styles.divider} />
-  
-        {/* fecha */}
-        <View style={styles.dateInfo}>
-          <Ionicons name="calendar-outline" size={24} color={PrimaryColor} />
-          <Text style={styles.dateText}>{item.date}</Text>
-          <Text style={styles.hourText}>{item.hour}</Text>
+  //funcion para renderizar cada tarjeta
+  const renderAppointment = (item) => (
+    <View key={item.id} style={styles.appointmentCard}>
+      
+      {/* barra azul izquierda */}
+      <View style={styles.leftBar} />
+
+      {/* info doctor */}
+      <View style={styles.doctorInfo}>
+        <Image source={{ uri: item.image }} style={styles.appointmentImage} />
+        <View>
+          <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
+              {item.name}
+          </Text>
+          <Text>{item.status}</Text>
         </View>
       </View>
-    );
 
-    return(
-      <View style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scroll}>
-                {/*header*/}
-                <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back-outline" size={24} color="black" />
-                </TouchableOpacity>
+      {/* linea divisora */}
+      <View style={styles.divider} />
 
-                <Image 
-                    source={require('../../assets/logoDocNow.png')} 
-                    style={{ width: 30, height: 30 }}
-                />
+      {/* fecha */}
+      <View style={styles.dateInfo}>
+        <Ionicons name="calendar-outline" size={24} color={PrimaryColor} />
+        <Text style={styles.dateText}>{item.date}</Text>
+        <Text style={styles.hourText}>{item.hour}</Text>
+      </View>
+    </View>
+  );
 
-                <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
-                    <Ionicons name="settings-outline" size={24} color="black" />
-                </TouchableOpacity>
-                </View>
+  return(
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {/*header*/}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back-outline" size={24} color="black" />
+          </TouchableOpacity>
 
-                <Text style={styles.textDoctors}>Notificaciones</Text>
+          <Image 
+              source={require('../../assets/logoDocNow.png')} 
+              style={{ width: 30, height: 30 }}
+          />
 
-                {appointments.map(renderAppointment)}
-
-                <StatusBar style="auto" />
-            </ScrollView>
+          <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
+              <Ionicons name="settings-outline" size={24} color="black" />
+          </TouchableOpacity>
         </View>
-    );
+
+        <Text style={styles.textDoctors}>Notificaciones</Text>
+
+        {appointments.map(renderAppointment)}
+
+        <StatusBar style="auto" />
+      </ScrollView>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
