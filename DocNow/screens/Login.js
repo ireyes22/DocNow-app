@@ -6,11 +6,13 @@ import ForgetPassword from './ForgetPassword';
 import { useNavigation } from '@react-navigation/native';
 import { auth } from '../firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 
 const PrimaryColor = '#0A3B74';
 const SecondaryColor = '#498FC0';
 
-const Login = () => {
+const Login = ({ onLogin }) => {
   const navigation = useNavigation();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -19,46 +21,55 @@ const Login = () => {
 
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Por favor completa todos los campos');
+  if (!email || !password) {
+    Alert.alert('Error', 'Por favor completa todos los campos');
+    return;
+  }
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    const uid = userCredential.user.uid;
+
+    const userDoc = await getDoc(doc(db, "users", uid));
+
+    if (!userDoc.exists()) {
+      Alert.alert("Error", "El usuario no tiene rol asignado");
       return;
     }
 
-    console.log('Intentando login con:', { email, password: '***' });
+    const { rol } = userDoc.data();
 
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      navigation.replace('Main');
-    } catch (error) {
-      console.log('Error completo:', error);
-      console.log('Código de error:', error.code);
-      console.log('Mensaje de error:', error.message);
-      
-      let errorMessage = 'Error al iniciar sesión';
-      
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'Usuario no encontrado';
-          break;
-        case 'auth/wrong-password':
-          errorMessage = 'Contraseña incorrecta';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Email inválido';
-          break;
-        case 'auth/invalid-credential':
-          errorMessage = 'Credenciales inválidas. Verifica tu email y contraseña';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Demasiados intentos. Intenta más tarde';
-          break;
-        default:
-          errorMessage = `${error.code}: ${error.message}`;
-      }
-      
-      Alert.alert('Error', errorMessage);
+    Alert.alert('Éxito', 'Inicio de sesión exitoso');
+    onLogin(rol);
+
+  } catch (error) {
+    let errorMessage = 'Error al iniciar sesión';
+
+    switch (error.code) {
+      case 'auth/user-not-found':
+        errorMessage = 'Usuario no encontrado';
+        break;
+      case 'auth/wrong-password':
+        errorMessage = 'Contraseña incorrecta';
+        break;
+      case 'auth/invalid-email':
+        errorMessage = 'Email inválido';
+        break;
+      case 'auth/invalid-credential':
+        errorMessage = 'Credenciales inválidas';
+        break;
+      default:
+        errorMessage = error.message;
     }
-  };
+
+    Alert.alert('Error', errorMessage);
+  }
+};
 
   return (
     <View style={styles.container}>

@@ -1,13 +1,19 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, {useState} from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
 import { ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import {  useRoute, useNavigation} from '@react-navigation/native';
 
 const PrimaryColor = '#0A3B74';
+const DangerColor = "#8B0000";
 
-const Profile = () => {
-  const navigation = useNavigation();
+const Profile = ({ onLogout }) => {
+    const navigation = useNavigation();
+    const [editMode, setEditMode] = useState(false);
+    const [selectedDays, setSelectedDays] = useState("lunes");
+    const [selectedSchedule, setSelectedSchedule] = useState("matutino");
+    const route = useRoute();
+    // const { patient } = route.params;
 
     const ratings = [
         {
@@ -109,10 +115,14 @@ const Profile = () => {
                     <View style={styles.contactHeader}>
                         <Text style={styles.contactLabel}>Datos de contacto</Text>
 
-                        {/* float button */}
-                        <TouchableOpacity style={styles.floatingButton}>
-                            <Ionicons name="create-outline" size={25} color={PrimaryColor} />
-                        </TouchableOpacity>
+                        {!editMode && (
+                            <TouchableOpacity
+                                style={styles.floatingButton}
+                                onPress={() => setEditMode(true)}
+                            >
+                                <Ionicons name="create-outline" size={25} color={PrimaryColor} />
+                            </TouchableOpacity>
+                        )}
                     </View>
         
                     <View style={styles.contactRow}>
@@ -133,58 +143,280 @@ const Profile = () => {
 
                 {/* services */}
                 <View style={styles.contactContainer}>
-                    <Text style={styles.contactLabel}>Servicios ofertados</Text>
-        
-                    <View style={styles.contactRow}>
-                        <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                        <Text style={styles.contactText}>Inyecciones</Text>
-                        <Text style={styles.contactText}>$100</Text>
+                    <View style={styles.servicesHeader}>
+                        <Text style={styles.contactLabel}>Servicios ofertados</Text>
+                        <Text style={styles.contactLabel}>Costo</Text>
                     </View>
-        
-                    <View style={styles.contactRow}>
-                        <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                        <Text style={styles.contactText}>Rayos X</Text>
-                        <Text style={styles.contactText}>$700</Text>
-                    </View>
-        
-                    <View style={styles.contactRow}>
-                        <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                        <Text style={styles.contactText}>Ultrasonidos</Text>
-                        <Text style={styles.contactText}>$650</Text>
-                    </View>
-        
-                    <View style={styles.contactRow}>
-                        <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                        <Text style={styles.contactText}>Consulta</Text>
-                        <Text style={styles.contactText}>$400</Text>
-                    </View>
+
+                    {!editMode? (
+                    <>
+                        <View style={styles.serviceRow}>
+                            <View style={styles.serviceLeft}>
+                                <Ionicons name="ellipse" size={12} color={PrimaryColor} />
+                                <Text style={styles.contactText}>Inyecciones</Text>
+                            </View>
+
+                            <Text style={styles.contactText}>$100</Text>
+                        </View>
+
+                        <View style={styles.serviceRow}>
+                            <View style={styles.serviceLeft}>
+                                <Ionicons name="ellipse" size={12} color={PrimaryColor} />
+                                <Text style={styles.contactText}>Ultrasonido</Text>
+                            </View>
+
+                            <Text style={styles.contactText}>$650</Text>
+                        </View>
+
+                        <View style={styles.serviceRow}>
+                            <View style={styles.serviceLeft}>
+                                <Ionicons name="ellipse" size={12} color={PrimaryColor} />
+                                <Text style={styles.contactText}>Rayos X</Text>
+                            </View>
+
+                            <Text style={styles.contactText}>$700</Text>
+                        </View>
+
+                        <View style={styles.serviceRow}>
+                            <View style={styles.serviceLeft}>
+                                <Ionicons name="ellipse" size={12} color={PrimaryColor} />
+                                <Text style={styles.contactText}>Consulta</Text>
+                            </View>
+
+                            <Text style={styles.contactText}>$400</Text>
+                        </View>
+                    </>
+                    ):(
+                    <>
+                        <View style={styles.serviceRow}>
+                            <View style={styles.serviceLeft}>
+                                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
+                            <TextInput
+                                style={styles.inputServices}
+                                keyboardType="default"
+                                multiline={true}
+                                ellipsizeMode="tail"
+                                scrollEnabled={true}  
+                            />
+
+                            </View>
+
+                            <TextInput
+                                style={styles.inputPrices}
+                                keyboardType="numbers-and-punctuation"
+                                multiline={true}
+                                ellipsizeMode="tail"
+                                scrollEnabled={true}  
+                            />
+                        </View>
+
+                        <View style={styles.serviceRow}>
+                            <View style={styles.serviceLeft}>
+                                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
+                            <TextInput
+                                style={styles.inputServices}
+                                keyboardType="default"
+                                multiline={true}
+                                ellipsizeMode="tail"
+                                scrollEnabled={true}  
+                            />
+
+                            </View>
+
+                            <TextInput
+                                style={styles.inputPrices}
+                                keyboardType="numbers-and-punctuation"
+                                multiline={true}
+                                ellipsizeMode="tail"
+                                scrollEnabled={true}  
+                            />
+                        </View>
+
+                        <View style={styles.serviceRow}>
+                            <View style={styles.serviceLeft}>
+                                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
+                            <TextInput
+                                style={styles.inputServices}
+                                keyboardType="default"
+                                multiline={true}
+                                ellipsizeMode="tail"
+                                scrollEnabled={true}  
+                            />
+
+                            </View>
+
+                            <TextInput
+                                style={styles.inputPrices}
+                                keyboardType="numbers-and-punctuation"
+                                multiline={true}
+                                ellipsizeMode="tail"
+                                scrollEnabled={true}  
+                            />
+                        </View>
+            
+                        <View style={styles.serviceRow}>
+                            <View style={styles.serviceLeft}>
+                                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
+                            <TextInput
+                                style={styles.inputServices}
+                                keyboardType="default"
+                                multiline={true}
+                                ellipsizeMode="tail"
+                                scrollEnabled={true}  
+                            />
+
+                            </View>
+
+                            <TextInput
+                                style={styles.inputPrices}
+                                keyboardType="numbers-and-punctuation"
+                                multiline={true}
+                                ellipsizeMode="tail"
+                                scrollEnabled={true}  
+                            />
+                        </View>
+                    </>
+                    )}  
+                    
                 </View>
 
                 {/* availability */}
                 <View style={styles.contactContainer}>
-                    <Text style={styles.contactLabel}>Disponibilidad</Text>
-        
-                    <View style={styles.contactRow}>
-                        <Text style={styles.contactText}>Lunes a Viernes</Text>
+                    {!editMode? (
+                    <>
+                        <Text style={styles.contactLabel}>Disponibilidad</Text>
+                    
+                        <View style={styles.contactRow}>
+                            <Text style={styles.contactText}>Lunes a Viernes</Text>
+                        </View>
+            
+                        <View style={styles.contactRow}>
+                            <Text style={styles.contactText}>Matutino</Text>
+                        </View>
+                    </> 
+                    ):(
+                    <>
+                    <View>
+                        <Text style={styles.disableContactLabel}>Días disponibles</Text>
+                        <TouchableOpacity
+                            style={
+                            selectedDays === "lunes"
+                                ? styles.selectButton
+                                : styles.unselectButton
+                            }
+                            onPress={() => setSelectedDays("lunes")}
+                        >
+                            <Text
+                            style={
+                                selectedDays === "lunes"
+                                ? styles.selectButtonText
+                                : styles.unselectButtonText
+                            }
+                            >
+                            Lunes a viernes
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={
+                            selectedDays === "fin"
+                                ? styles.selectButton
+                                : styles.unselectButton
+                            }
+                            onPress={() => setSelectedDays("fin")}
+                        >
+                            <Text
+                            style={
+                                selectedDays === "fin"
+                                ? styles.selectButtonText
+                                : styles.unselectButtonText
+                            }
+                            >
+                            Sábado y domingo
+                            </Text>
+                        </TouchableOpacity>
                     </View>
-        
-                    <View style={styles.contactRow}>
-                        <Text style={styles.contactText}>Matutino</Text>
+
+                    <View>
+                        <Text style={styles.disableContactLabel}>Horario</Text>
+                        <TouchableOpacity
+                            style={
+                            selectedSchedule === "matutino"
+                                ? styles.selectButton
+                                : styles.unselectButton
+                            }
+                            onPress={() => setSelectedSchedule("matutino")}
+                        >
+                            <Text
+                            style={
+                                selectedSchedule === "matutino"
+                                ? styles.selectButtonText
+                                : styles.unselectButtonText
+                            }
+                            >
+                            Matutino
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={
+                            selectedSchedule === "vespertino"
+                                ? styles.selectButton
+                                : styles.unselectButton
+                            }
+                            onPress={() => setSelectedSchedule("vespertino")}
+                        >
+                            <Text
+                            style={
+                                selectedSchedule === "vespertino"
+                                ? styles.selectButtonText
+                                : styles.unselectButtonText
+                            }
+                            >
+                            Vespertino
+                            </Text>
+                        </TouchableOpacity>
                     </View>
+                    </>
+                    )}
                 </View>
 
                 {/* ratings*/}
-                <View style={styles.contactContainer}>
-        
-                    <TouchableOpacity style={styles.servicesRow}>
-                        <Text style={styles.textServices}>Valoraciones</Text>
-                        <Ionicons name="arrow-forward-outline" size={24} color={PrimaryColor} />
+                {!editMode && (
+                    <View style={styles.contactContainer}>
+            
+                        <TouchableOpacity style={styles.servicesRow}
+                            onPress={() =>
+                                navigation.navigate("Ratings", { ratings })
+                            }
+                        >
+                            <Text style={styles.textServices}>Valoraciones</Text>
+                            <Ionicons name="arrow-forward-outline" size={24} color={PrimaryColor} />
+                        </TouchableOpacity>
+            
+                        {ratings.map(renderRating)}
+            
+                    </View>
+                )}
+
+                {/*buttoms*/}
+                {!editMode ? (
+                <>
+                    <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
+                    <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
+                    </TouchableOpacity>
+                </>
+                ) : (
+                <>
+                    <TouchableOpacity style={styles.saveButton}>
+                    <Text style={styles.saveButtonText}>Guardar</Text>
                     </TouchableOpacity>
         
-                    {ratings.map(renderRating)}
-        
-                </View>
-
+                    <TouchableOpacity style={styles.cancelButton} onPress={() => setEditMode(false)}>
+                    <Text style={styles.cancelButtonText}>Cancelar</Text>
+                    </TouchableOpacity>
+                </>
+                )}
 
             </View>
         </ScrollView>
@@ -281,14 +513,14 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         marginRight: 12,
     },
-        ratingContent: {
+    ratingContent: {
         flex: 1,
-        },
+    },
         ratingHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        },
+    },
     starsRow: {
         flexDirection: 'row',
     },
@@ -309,6 +541,124 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         elevation: 2,
+    },
+    logoutButton: {
+        marginTop: 15,
+        width: "90%",
+        borderRadius: 10,
+        padding: 15,
+        borderWidth: 2,
+        borderColor: DangerColor,
+        alignItems: "center",
+        alignContent: 'center',
+        alignSelf: 'center',
+        marginBottom: 20,
+    },
+    logoutButtonText: {
+        color: DangerColor,
+        fontSize: 18,
+        fontWeight: "600",
+    },
+    saveButton: {
+        marginTop: 35,
+        width: "90%",
+        backgroundColor: PrimaryColor,
+        padding: 15,
+        borderRadius: 10,
+        alignItems: "center",
+        alignContent: 'center',
+        alignSelf: 'center',
+   },
+   saveButtonText: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "600",
+   },
+    cancelButton: {
+        marginTop: 15,
+        width: "90%",
+        padding: 15,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: PrimaryColor,
+        alignItems: "center",
+        alignContent: 'center',
+        alignSelf: 'center',
+        marginBottom: 20,
+    },
+    cancelButtonText: {
+        color: PrimaryColor,
+        fontSize: 18,
+        fontWeight: "600",
+    },
+    selectButton: {
+        marginTop: 12,
+        width: "100%",
+        backgroundColor: PrimaryColor,
+        padding: 12,
+        borderRadius: 10,
+        alignContent: 'center',
+        alignSelf: 'center',
+   },
+   selectButtonText: {
+        color: "#fff",
+        fontSize: 15,
+        fontWeight: "600",
+   },
+   unselectButton: {
+        marginTop: 12,
+        width: "100%",
+        backgroundColor: '#EEEEEE',
+        padding: 12,
+        borderRadius: 10,
+        alignContent: 'center',
+        alignSelf: 'center',
+   },
+   unselectButtonText: {
+        color: "#000000",
+        fontSize: 15,
+        fontWeight: "600",
+   },
+   disableContactLabel: {
+        color: "#919191",
+        fontSize: 15,
+        marginTop: 20,
+    },
+    inputPrices: {
+        height: 45,
+        width: "20%",
+        backgroundColor: '#F2F2F2',
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        borderWidth: 1,
+        borderColor: '#CBCBCB',
+        textAlignVertical: "top",
+    },
+    inputServices: {
+        height: 45,
+        width: "70%",
+        backgroundColor: '#F2F2F2',
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        borderWidth: 1,
+        borderColor: '#CBCBCB',
+        textAlignVertical: "top",
+    },
+    servicesHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+    },
+    serviceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginVertical: 6,
+    },
+    serviceLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
     },
 });
 

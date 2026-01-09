@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, Alert } from 'react-native';
 import React, { useState, useEffect  } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -12,7 +12,7 @@ const DangerColor = "#8B0000";
 
 const defaultImage = "https://imgs.search.brave.com/MlqCP-S9mDSWE9l9yMNnR7cC-8BFzYmtcAZZ6l-8dU0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tYXJr/ZXRwbGFjZS5jYW52/YS5jb20vaWI0SUUv/TUFGMVAyaWI0SUUv/MS90bC9jYW52YS1w/cm9maWxlLXBpY3R1/cmUtYmxvY2stc3R5/bGUtaWNvbi1NQUYx/UDJpYjRJRS5wbmc";
 
-const Profile = () => {
+const Profile = ({ onLogout }) => {
   const navigation = useNavigation();
   const [editMode, setEditMode] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -139,7 +139,7 @@ const Profile = () => {
             <Text style={styles.editButtonText}>Editar</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.logoutButton} onPress={() => navigation.navigate("Login")}>
+          <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
             <Text style={styles.logoutButtonText}>Cerrar sesión</Text>
           </TouchableOpacity>
         </>

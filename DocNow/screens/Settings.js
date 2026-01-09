@@ -5,7 +5,6 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput, ScrollView,
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-
 const PrimaryColor = '#0A3B74';
 
 const  Settings = () => {
