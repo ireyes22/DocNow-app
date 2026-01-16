@@ -130,7 +130,7 @@ const Home = () => {
         {/* info doctor */}
         <View style={styles.doctorInfo}>
           <Image source={{ uri: item.image }} style={styles.appointmentImage} />
-          <Text style={styles.doctorName} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
             {item.sex === "female" ? "Dra." : "Dr."} {item.doctor}
           </Text>
         </View>

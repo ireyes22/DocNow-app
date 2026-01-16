@@ -36,6 +36,20 @@ const Login = ({ onLogin }) => {
     const uid = userCredential.user.uid;
 
     const userDoc = await getDoc(doc(db, "users", uid));
+    // useEffect(() => {
+    //   if (!auth.currentUser) return;
+
+    //   const fetchUser = async () => {
+    //     const userDoc = doc(db, "users", auth.currentUser.uid);
+    //     const docSnap = await getDoc(userDoc);
+
+    //     if (docSnap.exists()) {
+    //       setUser(docSnap.data());
+    //     }
+    //   };
+
+    //   fetchUser();
+    // }, []);
 
     if (!userDoc.exists()) {
       Alert.alert("Error", "El usuario no tiene rol asignado");

@@ -7,15 +7,19 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import {Picker} from '@react-native-picker/picker';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebaseConfig';
+import { auth, db } from '../../firebaseConfig';
+import { useRoute } from '@react-navigation/native';
 
 const PrimaryColor = '#0A3B74';
 
-const Register = () => {
+const RegisterUser = () => {
   const navigation = useNavigation();
   const [showPassword, setShowPassword] = useState(false);
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const route = useRoute();
+  const { tipo } = route.params; // 'paciente' | 'doctor'
 
   const [user, setUser] = useState({
     image: "https://imgs.search.brave.com/-QlOJZyWyUVMnRffakwLvvFi5NlMcWVcb_4v6MgFZGI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTQ5/NTA4ODA0My9lcy92/ZWN0b3IvaWNvbm8t/ZGUtcGVyZmlsLWRl/LXVzdWFyaW8tYXZh/dGFyLW8taWNvbm8t/ZGUtcGVyc29uYS1m/b3RvLWRlLXBlcmZp/bC1zJUMzJUFEbWJv/bG8tZGUtcmV0cmF0/by5qcGc_cz02MTJ4/NjEyJnc9MCZrPTIw/JmM9bVkzZ25qMmxV/N2toZ0xoVjZkUUJO/cW9tRUdqM2F5V0gt/eHRwWXVDWHJ6az0"
@@ -32,6 +36,10 @@ const Register = () => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // doctor user 
+  const [cedulaProfesional, setCedulaProfesional] = useState('');
+  const [cedulaEspecialidad, setCedulaEspecialidad] = useState('');
 
   const onChangeDate = (event, selectedDate) => {
     setShowDatePicker(false); 
@@ -57,19 +65,20 @@ const Register = () => {
 
       const uid = userCredential.user.uid;
 
-      // save in firestore
       await setDoc(doc(db, 'users', uid), {
         nombre: name,
         apellidoPaterno: lastNameP,
         apellidoMaterno: lastNameM,
-        curp: curp,
+        curp,
         sexo: sex,
         fechaNacimiento: date,
         estadoCivil: civilStatus,
         correo: email,
         telefono: phone,
+        rol: tipo,
+        activo: true,
         createdAt: new Date(),
-      });
+    });
 
       alert('Registro exitoso');
       navigation.navigate('Login');
@@ -89,7 +98,7 @@ const Register = () => {
           </TouchableOpacity>
 
           <Image 
-            source={require('../assets/logoDocNow.png')} 
+            source={require('../../assets/logoDocNow.png')} 
             style={{ width: 40, height: 40, resizeMode: 'contain',}}
           />
         </View>
@@ -140,6 +149,26 @@ const Register = () => {
               onChangeText={setLastNameM}
           />
 
+          {tipo === 'doctor' && (
+            <>
+              <Text style={styles.label}>Cédula profesional</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={cedulaProfesional}
+                onChangeText={setCedulaProfesional}
+              />
+
+              <Text style={styles.label}>Cédula de especialidad</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={cedulaEspecialidad}
+                onChangeText={setCedulaEspecialidad}
+              />
+            </>
+          )}
+
           {/* CURP */}
           <Text style={styles.label}>CURP</Text>
           <TextInput
@@ -159,7 +188,7 @@ const Register = () => {
               onPress={() => setSex('Masculino')}
             >
               <Image
-                source={require('../assets/icon_male.png')}
+                source={require('../../assets/icon_male.png')}
                 style={{ width: 30, height: 30, resizeMode: 'contain' }}
               />
               <Text style={styles.sexButtonText}>Masculino</Text>
@@ -173,7 +202,7 @@ const Register = () => {
               onPress={() => setSex('Femenino')}
             >
               <Image
-                source={require('../assets/icon_female.png')}
+                source={require('../../assets/icon_female.png')}
                 style={{ width: 30, height: 30, resizeMode: 'contain' }}
               />
               <Text style={styles.sexButtonText}>Femenino</Text>
@@ -259,7 +288,7 @@ const Register = () => {
         </View>
 
         {/* Button */}
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <TouchableOpacity style={styles.button} onPress={ () => {handleRegister(); navigation.navigate("FinishRegister")}}>
           <Text style={styles.buttonText}>Siguiente</Text>
         </TouchableOpacity>
 
@@ -326,7 +355,7 @@ photoButton: {
   width: 150,
   height: 150,
   borderRadius: 75,
-  overflow: 'hidden', // 🔑 clave para el overlay
+  overflow: 'hidden',
 },
 
 profileImage: {
@@ -446,4 +475,4 @@ editText: {
   },
 });
 
-export default Register;
+export default RegisterUser;

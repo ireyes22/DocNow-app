@@ -5,8 +5,6 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import Settings from '../Settings';
-import Rating from './Rating';
 import { createStackNavigator } from '@react-navigation/stack';
 
 
@@ -75,7 +73,7 @@ const MyAppointments = () => {
       {/* info doctor */}
       <View style={styles.doctorInfo}>
         <Image source={{ uri: item.image }} style={styles.appointmentImage} />
-        <Text style={styles.doctorName} numberOfLines={1} ellipsizeMode="tail">
+        <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
           Dr{item.sex === "female" ? "a" : ""}. {item.doctor} 
         </Text>
       </View>
@@ -181,7 +179,7 @@ const ArchivedAppointments = () => {
       <View style={styles.doctorInfo}>
         <Image source={{ uri: item.image }} style={styles.archiveImage} />
         <View style={styles.archiveInfo}>
-          <Text style={styles.doctorName} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
             Dr{item.sex === "female" ? "a" : ""}. {item.doctor} 
           </Text>
           <Text style={styles.serviceText}>{item.service}</Text>

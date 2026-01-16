@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Settings from '../Settings';
 
 const PrimaryColor = '#0A3B74';
 const DangerColor = "#8B0000";
@@ -25,7 +24,7 @@ const Confirm = () => {
       {/* info doctor */}
       <View style={styles.doctorInfo}>
         <Image source={{ uri: doctor.image }} style={styles.appointmentImage} />
-        <Text style={styles.doctorName} numberOfLines={1} ellipsizeMode="tail">
+        <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
           {doctor.sex === "female" ? "Dra." : "Dr."} {doctor.name}
         </Text>
       </View>
