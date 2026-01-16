@@ -33,6 +33,14 @@ import SeeNotes from "./screens/doctors/SeeNotes";
 import Ratings from "./screens/doctors/Ratings";
 
 // screens administrador
+import AdminHome from "./screens/admin/HomeAdmin";
+import SelectUser from "./screens/admin/SelectUser";
+import RegisterUser from "./screens/admin/RegisterUser";
+import FinishRegister from "./screens/admin/FinishRegister";
+import PatientAdmin from "./screens/admin/PatientAdmin";
+import DoctorAdmin from "./screens/admin/DoctorAdmin";
+import Backup from "./screens/admin/Backup";
+import Reports from "./screens/admin/Reports";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -123,6 +131,25 @@ function ProfileDocStack({ onLogout }) {
         {(props) => <ProfileDoc {...props} onLogout={onLogout} />}
       </Stack.Screen>
       <Stack.Screen name="Ratings" component={Ratings} />
+    </Stack.Navigator>
+  );
+}
+
+// administrator
+function AdminStack({ onLogout }) {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="AdminHome">
+        {(props) => <AdminHome {...props} onLogout={onLogout} />}
+      </Stack.Screen>
+      <Stack.Screen name="Settings" component={Settings} />
+      <Stack.Screen name="SelectUser" component={SelectUser} />
+      <Stack.Screen name="RegisterUser" component={RegisterUser}/>
+      <Stack.Screen name="FinishRegister" component={FinishRegister}/>
+      <Stack.Screen name="PatientAdmin" component={PatientAdmin}/>
+      <Stack.Screen name="DoctorAdmin" component={DoctorAdmin}/>
+      <Stack.Screen name="Backup" component={Backup}/>
+      <Stack.Screen name="Reports" component={Reports}/>
     </Stack.Navigator>
   );
 }
@@ -258,11 +285,15 @@ export default function Navigation() {
           <RootStack.Screen name="PatientApp">
             {(props) => <PatientTabs {...props} onLogout={logout} />}
           </RootStack.Screen>
-        ) : (
+        ) : userRole === "doctor" ? (
           <RootStack.Screen name="DoctorApp">
             {(props) => <DoctorStack {...props} onLogout={logout} />}
           </RootStack.Screen>
-        )}
+        ) : userRole === "admin" ? (
+          <RootStack.Screen name="AdminApp">
+            {(props) => <AdminStack {...props} onLogout={logout} />}
+          </RootStack.Screen>
+        ) : null}
       </RootStack.Navigator>
     </NavigationContainer>
   );

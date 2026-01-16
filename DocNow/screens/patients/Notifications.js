@@ -41,8 +41,11 @@ const Notifications = () => {
 
    //funcion para renderizar cada tarjeta
   const renderAppointment = (item) => (
-    <TouchableOpacity onPress={() => navigation.navigate("Confirm", { doctor: item })}>
-    <View key={item.id} style={styles.appointmentCard}>
+    <TouchableOpacity
+      key={item.id}
+      onPress={() => navigation.navigate("Confirm", { doctor: item })}
+    >
+    <View style={styles.appointmentCard}>
       
       {/* barra azul izquierda */}
       <View style={styles.leftBar} />
@@ -50,7 +53,7 @@ const Notifications = () => {
       {/* info doctor */}
       <View style={styles.doctorInfo}>
         <Image source={{ uri: item.image }} style={styles.appointmentImage} />
-        <Text style={styles.doctorName} numberOfLines={1} ellipsizeMode="tail">
+        <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
           {item.sex === "female" ? "Dra." : "Dr."} {item.name}
         </Text>
       </View>
