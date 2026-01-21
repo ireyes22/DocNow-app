@@ -3,97 +3,50 @@ import { StyleSheet, View, Text, Image, TouchableOpacity, TextInput  } from 'rea
 import { ScrollView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { db } from '../../firebaseConfig';
+import { useEffect } from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 const PrimaryColor = '#0A3B74';
 
 const PatientAdmin = () => {
     const navigation = useNavigation();
     const [search, setSearch] = useState('');
+    const [patients, setPatients] = useState([]);
 
-    const archivades = [
-    {
-      id: 1,
-      name: "Daniel flores Zazueta",
-      sex: "male",
-      age: 21,
-      service: "Rayos X",
-      image: "https://imgs.search.brave.com/PyiinRrY5IiCJP7f0qr4dC0_-gnIw5e2twwoXwRgGzI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/Zm90by1ncmF0aXMv/aG9tYnJlLWZlbGl6/LXBpZS1wbGF5YV8x/MDc0MjAtOTg2My5q/cGc_c2VtdD1haXNf/aHlicmlkJnc9NzQw/JnE9ODA",
-      date: "13 Sept. 2022",
-      hour: "10:00 AM",
-      status : "Confirmado",
-      clinic: 15,
-    },
-    {
-      id: 2,
-      name: "David Montoya Lopez",
-      sex: "male",
-      age: 21,
-      service: "Consulta",
-      image: "https://imgs.search.brave.com/GfUo1G7t01wG8lxoeHybzFdEqI9i4TtrddTz64ZjqwE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTM4/ODY0ODYxNy9lcy9m/b3RvL2pvdmVuLWNh/dWMlQzMlQTFzaWNv/LWNvbmZpYWRvLWNv/bi1yb3BhLWNhc3Vh/bC1kZS1tZXpjbGls/bGEtY29uLWxvcy1i/cmF6b3MtY3J1emFk/b3MtbWlyYW5kby1h/LWxhLmpwZz9zPTYx/Mng2MTImdz0wJms9/MjAmYz1UWE9WckJi/S3VPQ3dqUVR0NGtP/VTdJUGIwTTdxeXhz/bVVPMi1vVjlEVm13/PQ",
-      date: "15 Sept. 2022",
-      hour: "03:30 PM",
-      status : "Pendiente",
-      clinic: 12,
-    },
-    {
-      id: 3,
-      name: "Maria Jose Perez Luna",
-      sex: "female",
-      age: 21,
-      service: "Consulta",
-      image: "https://imgs.search.brave.com/DYV3BxkQ8UMDNBQZ0FGyoj6mhA-PVkTQLImT7hBztMs/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzA3LzEzLzM4LzM5/LzM2MF9GXzcxMzM4/Mzk5NV9OTnZKZ2U1/emFpbVFsdzRXVW1n/U3ZHMVhMVUdzcTBI/ai5qcGc",
-      date: "20 Sept. 2022",
-      hour: "08:00 AM",
-      status : "Cancelado",
-      clinic: 3,
-    },
-    {
-      id: 4,
-      name: "Daniel flores Zazueta",
-      sex: "male",
-      age: 21,
-      service: "Rayos X",
-      image: "https://imgs.search.brave.com/PyiinRrY5IiCJP7f0qr4dC0_-gnIw5e2twwoXwRgGzI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/Zm90by1ncmF0aXMv/aG9tYnJlLWZlbGl6/LXBpZS1wbGF5YV8x/MDc0MjAtOTg2My5q/cGc_c2VtdD1haXNf/aHlicmlkJnc9NzQw/JnE9ODA",
-      date: "13 Sept. 2022",
-      hour: "10:00 AM",
-      status : "Confirmado",
-      clinic: 15,
-    },
-    {
-      id: 5,
-      name: "David Montoya Lopez",
-      sex: "male",
-      age: 21,
-      service: "Consulta",
-      image: "https://imgs.search.brave.com/GfUo1G7t01wG8lxoeHybzFdEqI9i4TtrddTz64ZjqwE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTM4/ODY0ODYxNy9lcy9m/b3RvL2pvdmVuLWNh/dWMlQzMlQTFzaWNv/LWNvbmZpYWRvLWNv/bi1yb3BhLWNhc3Vh/bC1kZS1tZXpjbGls/bGEtY29uLWxvcy1i/cmF6b3MtY3J1emFk/b3MtbWlyYW5kby1h/LWxhLmpwZz9zPTYx/Mng2MTImdz0wJms9/MjAmYz1UWE9WckJi/S3VPQ3dqUVR0NGtP/VTdJUGIwTTdxeXhz/bVVPMi1vVjlEVm13/PQ",
-      date: "15 Sept. 2022",
-      hour: "03:30 PM",
-      status : "Pendiente",
-      clinic: 12,
-    },
-    {
-      id: 6,
-      name: "Maria Jose Perez Luna",
-      sex: "female",
-      age: 21,
-      service: "Consulta",
-      image: "https://imgs.search.brave.com/DYV3BxkQ8UMDNBQZ0FGyoj6mhA-PVkTQLImT7hBztMs/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzA3LzEzLzM4LzM5/LzM2MF9GXzcxMzM4/Mzk5NV9OTnZKZ2U1/emFpbVFsdzRXVW1n/U3ZHMVhMVUdzcTBI/ai5qcGc",
-      date: "20 Sept. 2022",
-      hour: "08:00 AM",
-      status : "Cancelado",
-      clinic: 3,
-    },
-  ];
+    // cargar a todos los pacientes
+    useEffect(() => {
+      const fetchPatients = async () => {
+        const q = query(
+          collection(db, 'users'),
+          where('rol', '==', 'paciente')
+        );
+  
+        const querySnapshot = await getDocs(q);
+        const patientsList = []; 
+  
+        querySnapshot.forEach((doc) => {
+          patientsList.push({
+            id: doc.id,
+            ...doc.data(),
+          });
+        });
+  
+        setPatients(patientsList);
+      };
+  
+      fetchPatients();
+    }, []);
 
     const renderArchivades = (item) => 
     (
       <View key={item.id} style={styles.archiveCard}>
         {/* info doctor */}
         <View style={styles.doctorInfo}>
-          <Image source={{ uri: item.image }} style={styles.archiveImage} />
+          <Image source={{ uri: item.photoURL }} style={styles.archiveImage} />
           <View style={styles.archiveInfo}>
-            <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
-                {item.name}
+            <Text style={styles.doctorName} numberOfLines={100} ellipsizeMode="tail">
+                {item.nombre} {item.apellidoPaterno} {item.apellidoMaterno}
             </Text>
             <Text style={styles.doctorService}>Ver citas</Text>
           </View>
@@ -150,7 +103,7 @@ const PatientAdmin = () => {
                 />
             </View>
 
-            {archivades.map(renderArchivades)}
+            {patients.map(renderArchivades)}
 
             </ScrollView>
         </View>

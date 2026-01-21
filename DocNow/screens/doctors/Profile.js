@@ -2,7 +2,11 @@ import React, {useState} from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
 import { ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {  useRoute, useNavigation} from '@react-navigation/native';
+import { useRoute, useNavigation} from '@react-navigation/native';
+import { auth, db } from '../../firebaseConfig';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const PrimaryColor = '#0A3B74';
 const DangerColor = "#8B0000";
@@ -10,10 +14,34 @@ const DangerColor = "#8B0000";
 const Profile = ({ onLogout }) => {
     const navigation = useNavigation();
     const [editMode, setEditMode] = useState(false);
-    const [selectedDays, setSelectedDays] = useState("lunes");
-    const [selectedSchedule, setSelectedSchedule] = useState("matutino");
-    const route = useRoute();
-    // const { patient } = route.params;
+    const [selectedDays, setSelectedDays] = useState("Lunes a viernes");
+    const [selectedSchedule, setSelectedSchedule] = useState("Matutino");
+    const [doctor, setDoctor] = useState(null);
+    const [services, setServices] = useState([
+        { nombre: "", precio: "" },
+        { nombre: "", precio: "" },
+        { nombre: "", precio: "" },
+        { nombre: "", precio: "" },
+    ]);
+
+    // guardar los datos editados del doctor
+    const saveDoctorData = async () => {
+        try {
+            const doctorRef = doc(db, "users", auth.currentUser.uid);
+
+            await updateDoc(doctorRef, {
+            servicios: services.filter(s => s.nombre && s.precio),
+            diasDisponibles: selectedDays,
+            horarioDisponible: selectedSchedule,
+            });
+
+            alert("Perfil médico guardado");
+            setEditMode(false);
+        } catch (error) {
+            console.error("Error al guardar perfil:", error);
+            alert("Error al guardar");
+        }
+    };
 
     const ratings = [
         {
@@ -40,17 +68,37 @@ const Profile = ({ onLogout }) => {
         }
     ];
 
-  const doctor = 
-   {
-     id: 1,
-     image: "https://imgs.search.brave.com/v0d3ARpJSKV9wHsAuyc8XtOSbRI_aw0qQichI5ynE04/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTQ3/MDUwNTM1MS9waG90/by9wb3J0cmFpdC1v/Zi1hLXNtaWxpbmct/ZG9jdG9yLWhvbGRp/bmctZ2xhc3Nlcy1h/bmQtYS1tb2JpbGUt/cGhvbmUtYXQtdGhl/LW9mZmljZS5qcGc_/cz02MTJ4NjEyJnc9/MCZrPTIwJmM9T1FY/NlNHMUs1TW4xNWUz/VkVsaTIzTmhKU2J1/NWszai02TXM1b2Nx/QnNIWT0",
-     name: "Mario Orantes",
-     sex: "male",
-     phone: "345353454",
-     email: "ejemplo@gmail.com",
-     specialty: "consultorio 5",
-     clinic: "Consultorio 15",
-   };
+    // cargar datos del doctor de firebase
+    useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (!user) return;
+
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            setDoctor(data);
+
+            if (data.servicios) {
+                setServices(data.servicios);
+            }
+
+            setSelectedDays(data.diasDisponibles || "Lunes a viernes");
+            setSelectedSchedule(data.horarioDisponible || "Matutino");
+        }
+    });
+
+    return () => unsubscribe();
+    }, []);
+
+    if (!doctor) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text>Cargando perfil...</Text>
+            </View>
+        );
+    }
 
    //render opinion
        const renderStars = (rating) => {
@@ -103,11 +151,11 @@ const Profile = ({ onLogout }) => {
                     </TouchableOpacity>
                 </View>
 
-                <Image source={{ uri: doctor.image }} style={styles.doctorImage} />
+                <Image source={{ uri: doctor.photoURL }} style={styles.doctorImage} />
 
                 {/* doctor name and specialty */}
                 <View style={styles.doctorName}>
-                    <Text style={styles.nameDoctor}>{doctor.sex === "female" ? "Dra." : "Dr."} {doctor.name}</Text>
+                    <Text style={styles.nameDoctor}>{doctor.sexo === "Femenino" ? "Dra." : "Dr."} {doctor.nombre} {doctor.apellidoPaterno}</Text>
                 </View>
 
                 {/* contacts */}
@@ -127,17 +175,17 @@ const Profile = ({ onLogout }) => {
         
                     <View style={styles.contactRow}>
                         <Ionicons name="call-outline" size={20} color={PrimaryColor} />
-                        <Text style={styles.contactText}>{doctor.phone}</Text>
+                        <Text style={styles.contactText}>{doctor.telefono}</Text>
                     </View>
         
                     <View style={styles.contactRow}>
                         <Ionicons name="mail-outline" size={20} color={PrimaryColor} />
-                        <Text style={styles.contactText}>{doctor.email}</Text>
+                        <Text style={styles.contactText}>{doctor.correo}</Text>
                     </View>
         
                     <View style={styles.contactRow}>
                         <Ionicons name="business-outline" size={20} color={PrimaryColor} />
-                        <Text style={styles.contactText}>{doctor.clinic}</Text>
+                        <Text style={styles.contactText}>{doctor.consultorio}</Text>
                     </View>
                 </View>
 
@@ -150,131 +198,58 @@ const Profile = ({ onLogout }) => {
 
                     {!editMode? (
                     <>
-                        <View style={styles.serviceRow}>
+                        <>
+                        {services.length === 0 ? (
+                        <Text style={styles.contactText}>
+                            No hay servicios registrados
+                        </Text>
+                        ) : (
+                        services.map((service, index) => (
+                            <View key={index} style={styles.serviceRow}>
                             <View style={styles.serviceLeft}>
                                 <Ionicons name="ellipse" size={12} color={PrimaryColor} />
-                                <Text style={styles.contactText}>Inyecciones</Text>
+                                <Text style={styles.contactText}>
+                                {service.nombre}
+                                </Text>
                             </View>
 
-                            <Text style={styles.contactText}>$100</Text>
-                        </View>
-
-                        <View style={styles.serviceRow}>
-                            <View style={styles.serviceLeft}>
-                                <Ionicons name="ellipse" size={12} color={PrimaryColor} />
-                                <Text style={styles.contactText}>Ultrasonido</Text>
+                            <Text style={styles.contactText}>
+                                ${service.precio}
+                            </Text>
                             </View>
-
-                            <Text style={styles.contactText}>$650</Text>
-                        </View>
-
-                        <View style={styles.serviceRow}>
-                            <View style={styles.serviceLeft}>
-                                <Ionicons name="ellipse" size={12} color={PrimaryColor} />
-                                <Text style={styles.contactText}>Rayos X</Text>
-                            </View>
-
-                            <Text style={styles.contactText}>$700</Text>
-                        </View>
-
-                        <View style={styles.serviceRow}>
-                            <View style={styles.serviceLeft}>
-                                <Ionicons name="ellipse" size={12} color={PrimaryColor} />
-                                <Text style={styles.contactText}>Consulta</Text>
-                            </View>
-
-                            <Text style={styles.contactText}>$400</Text>
-                        </View>
+                        ))
+                        )}
+                    </>
                     </>
                     ):(
                     <>
-                        <View style={styles.serviceRow}>
+                        {services.map((service, index) => (
+                        <View key={index} style={styles.serviceRow}>
                             <View style={styles.serviceLeft}>
-                                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
+                            <Ionicons name="ellipse" size={15} color={PrimaryColor} />
                             <TextInput
                                 style={styles.inputServices}
-                                keyboardType="default"
-                                multiline={true}
-                                ellipsizeMode="tail"
-                                scrollEnabled={true}  
+                                value={service.nombre}
+                                onChangeText={(text) => {
+                                const updated = [...services];
+                                updated[index].nombre = text;
+                                setServices(updated);
+                                }}
                             />
-
                             </View>
 
                             <TextInput
-                                style={styles.inputPrices}
-                                keyboardType="numbers-and-punctuation"
-                                multiline={true}
-                                ellipsizeMode="tail"
-                                scrollEnabled={true}  
+                            style={styles.inputPrices}
+                            value={service.precio}
+                            keyboardType="numeric"
+                            onChangeText={(text) => {
+                                const updated = [...services];
+                                updated[index].precio = text;
+                                setServices(updated);
+                            }}
                             />
                         </View>
-
-                        <View style={styles.serviceRow}>
-                            <View style={styles.serviceLeft}>
-                                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                            <TextInput
-                                style={styles.inputServices}
-                                keyboardType="default"
-                                multiline={true}
-                                ellipsizeMode="tail"
-                                scrollEnabled={true}  
-                            />
-
-                            </View>
-
-                            <TextInput
-                                style={styles.inputPrices}
-                                keyboardType="numbers-and-punctuation"
-                                multiline={true}
-                                ellipsizeMode="tail"
-                                scrollEnabled={true}  
-                            />
-                        </View>
-
-                        <View style={styles.serviceRow}>
-                            <View style={styles.serviceLeft}>
-                                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                            <TextInput
-                                style={styles.inputServices}
-                                keyboardType="default"
-                                multiline={true}
-                                ellipsizeMode="tail"
-                                scrollEnabled={true}  
-                            />
-
-                            </View>
-
-                            <TextInput
-                                style={styles.inputPrices}
-                                keyboardType="numbers-and-punctuation"
-                                multiline={true}
-                                ellipsizeMode="tail"
-                                scrollEnabled={true}  
-                            />
-                        </View>
-            
-                        <View style={styles.serviceRow}>
-                            <View style={styles.serviceLeft}>
-                                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                            <TextInput
-                                style={styles.inputServices}
-                                keyboardType="default"
-                                multiline={true}
-                                ellipsizeMode="tail"
-                                scrollEnabled={true}  
-                            />
-
-                            </View>
-
-                            <TextInput
-                                style={styles.inputPrices}
-                                keyboardType="numbers-and-punctuation"
-                                multiline={true}
-                                ellipsizeMode="tail"
-                                scrollEnabled={true}  
-                            />
-                        </View>
+                        ))}
                     </>
                     )}  
                     
@@ -287,11 +262,11 @@ const Profile = ({ onLogout }) => {
                         <Text style={styles.contactLabel}>Disponibilidad</Text>
                     
                         <View style={styles.contactRow}>
-                            <Text style={styles.contactText}>Lunes a Viernes</Text>
+                            <Text style={styles.contactText}>{doctor.diasDisponibles}</Text>
                         </View>
             
                         <View style={styles.contactRow}>
-                            <Text style={styles.contactText}>Matutino</Text>
+                            <Text style={styles.contactText}>{doctor.horarioDisponible}</Text>
                         </View>
                     </> 
                     ):(
@@ -300,15 +275,15 @@ const Profile = ({ onLogout }) => {
                         <Text style={styles.disableContactLabel}>Días disponibles</Text>
                         <TouchableOpacity
                             style={
-                            selectedDays === "lunes"
+                            selectedDays === "Lunes a viernes"
                                 ? styles.selectButton
                                 : styles.unselectButton
                             }
-                            onPress={() => setSelectedDays("lunes")}
+                            onPress={() => setSelectedDays("Lunes a viernes")}
                         >
                             <Text
                             style={
-                                selectedDays === "lunes"
+                                selectedDays === "Lunes a viernes"
                                 ? styles.selectButtonText
                                 : styles.unselectButtonText
                             }
@@ -319,15 +294,15 @@ const Profile = ({ onLogout }) => {
 
                         <TouchableOpacity
                             style={
-                            selectedDays === "fin"
+                            selectedDays === "Sábado y domingo"
                                 ? styles.selectButton
                                 : styles.unselectButton
                             }
-                            onPress={() => setSelectedDays("fin")}
+                            onPress={() => setSelectedDays("Sábado y domingo")}
                         >
                             <Text
                             style={
-                                selectedDays === "fin"
+                                selectedDays === "Sábado y domingo"
                                 ? styles.selectButtonText
                                 : styles.unselectButtonText
                             }
@@ -341,15 +316,15 @@ const Profile = ({ onLogout }) => {
                         <Text style={styles.disableContactLabel}>Horario</Text>
                         <TouchableOpacity
                             style={
-                            selectedSchedule === "matutino"
+                            selectedSchedule === "Matutino"
                                 ? styles.selectButton
                                 : styles.unselectButton
                             }
-                            onPress={() => setSelectedSchedule("matutino")}
+                            onPress={() => setSelectedSchedule("Matutino")}
                         >
                             <Text
                             style={
-                                selectedSchedule === "matutino"
+                                selectedSchedule === "Matutino"
                                 ? styles.selectButtonText
                                 : styles.unselectButtonText
                             }
@@ -360,15 +335,15 @@ const Profile = ({ onLogout }) => {
 
                         <TouchableOpacity
                             style={
-                            selectedSchedule === "vespertino"
+                            selectedSchedule === "Vespertino"
                                 ? styles.selectButton
                                 : styles.unselectButton
                             }
-                            onPress={() => setSelectedSchedule("vespertino")}
+                            onPress={() => setSelectedSchedule("Vespertino")}
                         >
                             <Text
                             style={
-                                selectedSchedule === "vespertino"
+                                selectedSchedule === "Vespertino"
                                 ? styles.selectButtonText
                                 : styles.unselectButtonText
                             }
@@ -408,7 +383,7 @@ const Profile = ({ onLogout }) => {
                 </>
                 ) : (
                 <>
-                    <TouchableOpacity style={styles.saveButton}>
+                    <TouchableOpacity style={styles.saveButton} onPress={saveDoctorData}>
                     <Text style={styles.saveButtonText}>Guardar</Text>
                     </TouchableOpacity>
         

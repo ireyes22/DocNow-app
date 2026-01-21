@@ -1,61 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
 import { ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useRoute,useNavigation } from '@react-navigation/native';
-import { addDoc, collection, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, Timestamp, getDocs, query, where  } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 
 const PrimaryColor = '#0A3B74';
 
-const CreateNotes = () => {
+const NotesPatient = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { patient, doctor } = route.params;
+    const [nota, setNota] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Inputs del formulario
-    const [peso, setPeso] = useState('');
-    const [altura, setAltura] = useState('');
-    const [diagnostico, setDiagnostico] = useState('');
-    const [sintomas, setSintomas] = useState('');
-    const [tratamiento, setTratamiento] = useState('');
+    useEffect(() => {
+    const fetchNota = async () => {
+        try {
+        const q = query(
+            collection(db, 'notas'),
+            where('pacienteId', '==', route.params.pacienteId)
+        );
 
-    const guardarNota = async () => {
-  if (!diagnostico && !sintomas && !tratamiento) {
-    alert('Agrega al menos diagnóstico, síntomas o tratamiento');
-    return;
-  }
+        const snapshot = await getDocs(q);
 
-  try {
-    await addDoc(collection(db, 'notas'), {
-      pacienteId: patient.id,
-      pacienteNombre: patient.name,
-      edad: patient.age ?? null,
-      fechaCita: patient.date,
+        if (!snapshot.empty) {
+            setNota(snapshot.docs[0].data());
+        }
+        } catch (error) {
+        console.error('Error al cargar nota:', error);
+        } finally {
+        setLoading(false);
+        }
+    };
 
-      doctorId: doctor.id,
-      doctorNombre: doctor.nombre,
-      clinic: doctor.clinic,
+    fetchNota();
+    }, []);
 
-      peso: peso ? Number(peso) : null,
-      altura: altura ? Number(altura) : null,
+    if (loading) {
+    return (
+        <View style={styles.container}>
+        <Text>Cargando nota...</Text>
+        </View>
+    );
+    }
 
-      diagnostico: diagnostico || '',
-      sintomas: sintomas || '',
-      tratamiento: tratamiento || '',
-
-      createdAt: Timestamp.now(),
-    });
-
-    alert('Nota guardada correctamente');
-    navigation.goBack();
-  } catch (error) {
-    console.error('Error al guardar nota:', error);
-    alert('Error al guardar la nota');
-  }
-};
-
+    if (!nota) {
+    return (
+        <View style={styles.container}>
+        <Text>No hay notas registradas</Text>
+        </View>
+    );
+    }
 
     return(
         <ScrollView contentContainerStyle={styles.scroll}>
@@ -82,80 +80,47 @@ const CreateNotes = () => {
                 <View style={styles.contactContainer}>
                     <View style={styles.contactRow}>
                         <Text style={styles.contactLabel}>Fecha:</Text>
-                        <Text style={styles.contactText}>{patient.date}</Text>
+                        <Text style={styles.contactText}>{nota.fechaCita}</Text>
                     </View>
 
                     <View style={styles.contactRow}>
                         <Text style={styles.contactLabel}>Nombre:</Text>
-                        <Text style={styles.contactText}>{patient.name}</Text>
+                        <Text style={styles.contactText}>{nota.pacienteNombre}</Text>
                     </View>
                     
                     <View style={styles.contactRow}>
                         <Text style={styles.contactLabel}>Edad:</Text>
-                        <Text style={styles.contactText}>{patient.age}</Text>
+                        <Text style={styles.contactText}>{nota.edad}</Text>
                     </View>
 
                     <View style={styles.contactRow}>
                         <Text style={styles.contactLabel}>Consultorio:</Text>
-                        <Text style={styles.contactText}>{doctor.clinic}</Text>
+                        <Text style={styles.contactText}>{nota.clinic}</Text>
                     </View>
                 </View>
 
                 <View style={styles.row}>
                     <View style={styles.half}>
                         <Text style={styles.label}>Peso(kg)</Text>
-                        <TextInput
-                            style={styles.input}
-                            keyboardType="numeric"
-                            value={peso}
-                            onChangeText={setPeso}
-                        />
+                        <Text style={styles.readText}>{nota.peso ?? '—'}</Text>
                     </View>
 
                     <View style={styles.half}>
                         <Text style={styles.label}>Altura(cm)</Text>
-                        <TextInput
-                            style={styles.input}
-                            keyboardType="numeric"
-                            value={altura}
-                            onChangeText={setAltura}
-                        />
+                        <Text style={styles.readText}>{nota.altura ?? '—'}</Text>
                     </View>
                 </View>
 
                 <Text style={styles.label}>Diagnóstico</Text>
-                <TextInput
-                    style={styles.input}
-                    keyboardType="default"
-                    multiline={true}
-                    ellipsizeMode="tail"
-                    scrollEnabled={true}  
-                    value={diagnostico}
-                    onChangeText={setDiagnostico}
-                />
+                <Text style={styles.readText}>{nota.diagnostico}</Text>
 
                 <Text style={styles.label}>Sintomas</Text>
-                <TextInput
-                    style={styles.inputBig}
-                    keyboardType="default"
-                    multiline={true}
-                    scrollEnabled={true}
-                    value={sintomas}
-                    onChangeText={setSintomas}
-                />
+                <Text style={styles.readText}>{nota.sintomas}</Text>
 
                 <Text style={styles.label}>Tratamiento</Text>
-                <TextInput
-                    style={styles.inputBig}
-                    keyboardType="default"
-                    placeholder='Añadir indicaciones...'
-                    multiline={true}
-                    scrollEnabled={true}  
-                    value={tratamiento}
-                    onChangeText={setTratamiento}
-                />
+                <Text style={styles.readText}>{nota.tratamiento}</Text>
 
-                <TouchableOpacity style={styles.sendButton} onPress={guardarNota}>
+                <TouchableOpacity style={styles.sendButton}>
                     <Text style={styles.sendButtonText}>Guardar nota</Text>
                 </TouchableOpacity>
         
@@ -275,6 +240,13 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: "600",
     },
+    readText: {
+        backgroundColor: '#F2F2F2',
+        padding: 12,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#CBCBCB',
+    }
 });
 
-export default CreateNotes;
+export default NotesPatient;

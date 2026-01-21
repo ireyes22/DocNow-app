@@ -89,12 +89,12 @@ const SeeDoctor = () => {
             </TouchableOpacity>
         </View>
 
-        <Image source={{ uri: doctor.image }} style={styles.doctorImage} />
+        <Image source={{ uri: doctor.photoURL }} style={styles.doctorImage} />
 
         {/* doctor name and specialty */}
         <View style={styles.doctorName}>
-            <Text style={styles.nameDoctor}>{doctor.sex === "female" ? "Dra." : "Dr."} {doctor.name}</Text>
-            <Text style={styles.specialityDoctor}>{doctor.specialty}</Text>
+            <Text style={styles.nameDoctor}>{doctor.sexo === "Femenino" ? "Dra." : "Dr."} {doctor.nombre} {doctor.apellidoPaterno}</Text>
+            <Text style={styles.specialityDoctor}>{doctor.especialidad}</Text>
         </View>
 
         {/* contacts */}
@@ -103,60 +103,67 @@ const SeeDoctor = () => {
 
             <View style={styles.contactRow}>
                 <Ionicons name="call-outline" size={20} color={PrimaryColor} />
-                <Text style={styles.contactText}>{doctor.phone}</Text>
+                <Text style={styles.contactText}>{doctor.telefono}</Text>
             </View>
 
             <View style={styles.contactRow}>
                 <Ionicons name="mail-outline" size={20} color={PrimaryColor} />
-                <Text style={styles.contactText}>{doctor.email}</Text>
+                <Text style={styles.contactText}>{doctor.correo}</Text>
             </View>
 
             <View style={styles.contactRow}>
                 <Ionicons name="business-outline" size={20} color={PrimaryColor} />
-                <Text style={styles.contactText}>{doctor.clinic}</Text>
+                <Text style={styles.contactText}>{doctor.consultorio}</Text>
             </View>
         </View>
 
         {/* services */}
         <View style={styles.contactContainer}>
+          <View style={styles.servicesHeader}>
             <Text style={styles.contactLabel}>Servicios ofertados</Text>
+            <Text style={styles.contactLabel}>Costo</Text>
+          </View>
 
-            <View style={styles.contactRow}>
-                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                <Text style={styles.contactText}>Inyecciones</Text>
-                <Text style={styles.contactText}>$100</Text>
-            </View>
+           {doctor.servicios && doctor.servicios.length > 0 ? (
+            doctor.servicios.map((service, index) => (
+              <View key={index} style={styles.serviceRow}>
+                <View style={styles.serviceLeft}>
+                  <Ionicons name="ellipse" size={12} color={PrimaryColor} />
+                  <Text style={styles.contactText}>
+                    {service.nombre}
+                  </Text>
+                </View>
 
-            <View style={styles.contactRow}>
-                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                <Text style={styles.contactText}>Rayos X</Text>
-                <Text style={styles.contactText}>$700</Text>
-            </View>
-
-            <View style={styles.contactRow}>
-                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                <Text style={styles.contactText}>Ultrasonidos</Text>
-                <Text style={styles.contactText}>$650</Text>
-            </View>
-
-            <View style={styles.contactRow}>
-                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                <Text style={styles.contactText}>Consulta</Text>
-                <Text style={styles.contactText}>$400</Text>
-            </View>
+                <Text style={styles.contactText}>
+                  ${service.precio}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.contactText}>
+              Este doctor no ha registrado servicios
+            </Text>
+          )}
         </View>
 
         {/* availability */}
         <View style={styles.contactContainer}>
-            <Text style={styles.contactLabel}>Disponibilidad</Text>
+          <Text style={styles.contactLabel}>Disponibilidad</Text>
+          <View style={styles.contactRow}>
+            <Text style={styles.contactText}>
+              {doctor.diasDisponibles === "Lunes a viernes"
+                ? "Lunes a Viernes"
+                : "Sábado y Domingo"}
+            </Text>
+          </View>
 
-            <View style={styles.contactRow}>
-                <Text style={styles.contactText}>Lunes a Viernes</Text>
-            </View>
-
-            <View style={styles.contactRow}>
-                <Text style={styles.contactText}>Matutino</Text>
-            </View>
+          <View style={styles.contactRow}>
+            <Text style={styles.contactText}>
+              {doctor.horarioDisponible === "Matutino"
+                ? "Matutino"
+                : "Vespertino"}
+            </Text>
+          </View>
         </View>
 
         {/* ratings*/}
@@ -276,14 +283,14 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginRight: 12,
   },
-    ratingContent: {
+  ratingContent: {
     flex: 1,
-    },
-    ratingHeader: {
+  },
+  ratingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    },
+  },
   starsRow: {
     flexDirection: 'row',
   },
@@ -312,7 +319,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
-
+  servicesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  serviceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 6,
+  },
+  serviceLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
 });
 
 export default SeeDoctor;

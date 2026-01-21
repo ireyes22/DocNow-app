@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import Login from  '../Login';
 import { auth, db } from '../../firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import * as ImagePicker from 'expo-image-picker';
 
 const PrimaryColor = "#0A3B74";
 const DangerColor = "#8B0000";
@@ -17,6 +18,69 @@ const Profile = ({ onLogout }) => {
   const [editMode, setEditMode] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUD_NAME;
+  const UPLOAD_PRESET = process.env.EXPO_PUBLIC_UPLOAD_PRESET;
+
+  // selected image from gallery
+  const pickImage = async () => {
+  const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      uploadToCloudinary(result.assets[0].uri);
+    }
+  };
+
+  // upload image to cloudinary
+  const uploadToCloudinary = async (imageUri) => {
+    const data = new FormData();
+
+    data.append('file', {
+      uri: imageUri,
+      type: 'image/jpeg',
+      name: 'profile.jpg',
+    });
+
+    data.append('upload_preset', UPLOAD_PRESET);
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: data,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      const result = await response.json();
+      saveImageUrl(result.secure_url);
+    } catch (error) {
+      console.log('Error subiendo imagen:', error);
+    }
+  };
+
+  // save image url to firestore
+  const saveImageUrl = async (url) => {
+    const user = auth.currentUser;
+
+    if (!user) return;
+
+    await updateDoc(doc(db, 'users', user.uid), {
+      photoURL: url,
+    });
+
+    setUser((prev) => ({
+      ...prev,
+      photoURL: url,
+    }));
+  };
 
   // user
   const [user, setUser] = useState({
@@ -24,7 +88,7 @@ const Profile = ({ onLogout }) => {
     correo: "",
     contraseña: "",
     telefono: "",
-    image: "https://imgs.search.brave.com/-QlOJZyWyUVMnRffakwLvvFi5NlMcWVcb_4v6MgFZGI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTQ5/NTA4ODA0My9lcy92/ZWN0b3IvaWNvbm8t/ZGUtcGVyZmlsLWRl/LXVzdWFyaW8tYXZh/dGFyLW8taWNvbm8t/ZGUtcGVyc29uYS1m/b3RvLWRlLXBlcmZp/bC1zJUMzJUFEbWJv/bG8tZGUtcmV0cmF0/by5qcGc_cz02MTJ4/NjEyJnc9MCZrPTIw/JmM9bVkzZ25qMmxV/N2toZ0xoVjZkUUJO/cW9tRUdqM2F5V0gt/eHRwWXVDWHJ6az0"
+    image: defaultImage,
   });
 
   // Bring data to the screen
@@ -61,12 +125,12 @@ const Profile = ({ onLogout }) => {
 
       <View style={styles.imageContainer}>
         <Image 
-          source={{ uri: user.image || defaultImage }} 
+          source={{ uri: user.photoURL || defaultImage }} 
           style={styles.profileImage} 
         />
 
         {editMode && (
-          <TouchableOpacity style={styles.editLabel}>
+          <TouchableOpacity style={styles.editLabel} onPress={pickImage}>
             <Text style={{ color: "#fff", fontWeight: "600" }}>Editar</Text>
           </TouchableOpacity>
         )}
@@ -74,7 +138,7 @@ const Profile = ({ onLogout }) => {
 
       {/*name*/}
       {!editMode && (
-        <Text style={styles.profileName}>{user.nombre}</Text>
+        <Text style={styles.profileName} numberOfLines={2}>{user.nombre} {user.apellidoPaterno} {user.apellidoMaterno}</Text>
       )}
 
       {/*form*/}
@@ -191,6 +255,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     marginBottom: 20,
+    textAlign: "center",
   },
   form: {
     width: "90%",

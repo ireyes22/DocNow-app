@@ -8,18 +8,72 @@ import {Picker} from '@react-native-picker/picker';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
+import * as ImagePicker from 'expo-image-picker';
 
 const PrimaryColor = '#0A3B74';
 
-const Register = () => {
+const Register = ({ onLogin }) => {
   const navigation = useNavigation();
   const [showPassword, setShowPassword] = useState(false);
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUD_NAME;
+  const UPLOAD_PRESET = process.env.EXPO_PUBLIC_UPLOAD_PRESET;
+  const defaultImage = "https://imgs.search.brave.com/MlqCP-S9mDSWE9l9yMNnR7cC-8BFzYmtcAZZ6l-8dU0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tYXJr/ZXRwbGFjZS5jYW52/YS5jb20vaWI0SUUv/TUFGMVAyaWI0SUUv/MS90bC9jYW52YS1w/cm9maWxlLXBpY3R1/cmUtYmxvY2stc3R5/bGUtaWNvbi1NQUYx/UDJpYjRJRS5wbmc";
 
   const [user, setUser] = useState({
-    image: "https://imgs.search.brave.com/-QlOJZyWyUVMnRffakwLvvFi5NlMcWVcb_4v6MgFZGI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTQ5/NTA4ODA0My9lcy92/ZWN0b3IvaWNvbm8t/ZGUtcGVyZmlsLWRl/LXVzdWFyaW8tYXZh/dGFyLW8taWNvbm8t/ZGUtcGVyc29uYS1m/b3RvLWRlLXBlcmZp/bC1zJUMzJUFEbWJv/bG8tZGUtcmV0cmF0/by5qcGc_cz02MTJ4/NjEyJnc9MCZrPTIw/JmM9bVkzZ25qMmxV/N2toZ0xoVjZkUUJO/cW9tRUdqM2F5V0gt/eHRwWXVDWHJ6az0"
+    image: defaultImage,
   });
+
+  // selected image from gallery
+    const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+  
+      if (!result.canceled) {
+        uploadToCloudinary(result.assets[0].uri);
+      }
+    };
+  
+    // upload image to cloudinary
+    const uploadToCloudinary = async (imageUri) => {
+      const data = new FormData();
+  
+      data.append('file', {
+        uri: imageUri,
+        type: 'image/jpeg',
+        name: 'profile.jpg',
+      });
+    
+      data.append('upload_preset', UPLOAD_PRESET);
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: data,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      const result = await response.json();
+      saveImageUrl(result.secure_url);
+    } catch (error) {
+      console.log('Error subiendo imagen:', error);
+    }
+  };
+
+  // save image url to firestore
+  const saveImageUrl = (url) => {
+    setUser({ image: url });
+  };
 
   // register user
   const [name, setName] = useState('');
@@ -67,12 +121,14 @@ const Register = () => {
         fechaNacimiento: date,
         estadoCivil: civilStatus,
         correo: email,
+        rol: "paciente",
         telefono: phone,
+        photoURL: user.image,
         createdAt: new Date(),
       });
 
       alert('Registro exitoso');
-      navigation.navigate('Login');
+      navigation.goBack();
 
     } catch (error) {
       alert(error.message);
@@ -102,7 +158,7 @@ const Register = () => {
         <View style={styles.form}>
           {/* photo */}
           <View style={styles.photoWrapper}>
-            <TouchableOpacity style={styles.photoButton}>
+            <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
               <Image 
                 source={{ uri: user.image || defaultImage }} 
                 style={styles.profileImage} 

@@ -6,104 +6,117 @@ import { useNavigation } from '@react-navigation/native';
 import Settings from '../Settings';
 import SeeDoctor from './SeeDoctor';
 import Login from  '../Login';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db, auth } from '../../firebaseConfig';
+import { useEffect } from 'react';
 
 const PrimaryColor = '#0A3B74';
 
-const Home = () => {
+const Home = ({onLogout}) => {
   const navigation = useNavigation();
-  
+  const [services, setServices] = useState([]);
+  const [showAllServices, setShowAllServices] = useState(false);
   const [search, setSearch] = useState('');
-    //array de servicios
-  const services = [
-    {
-      id: 1,
-      name: "Rayos X",
-      image: "https://irp.cdn-website.com/3aeb46bf/dms3rep/multi/blog.webp"
-    },
-    {
-      id: 2,
-      name: "Ultrasonidos",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXFH-ggpwtOsq_p1l8mFh0ugH0ar_zGrrnKQ&s"
-    },
-    {
-      id: 3,
-      name: "Consulta",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQc_1BtaNYvaSwlWouP7MQXjfXYM5PdHxi3XQ&s"
-    }
-  ];
+  const [doctors, setDoctors] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  
+  // traer servicios
+  useEffect(() => {
+    const fetchServices = async () => {
+      const querySnapshot = await getDocs(collection(db, 'servicios'));
+      const data = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setServices(data);
+    };
 
-  const doctors = [
-    {
-      id: 1,
-      name: "Juan Perez",
-      phone: "3453535345",
-      email: "ejemplo@gmail.com",
-      sex: "male",
-      image: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg",
-      specialty: 'Internista',
-      clinic: "Consultorio 1",
-    },
-    {
-      id: 2,
-      name: "Maria Lopez",
-      phone: "3453535345",
-      email: "ejemplo@gmail.com",
-      sex: "female",
-      image: "https://cdn.agenciasinc.es/var/ezwebin_site/storage/images/_aliases/img_1col/noticias/solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales/3405721-5-esl-MX/Solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales.jpg",
-      specialty: 'Internista',
-      clinic: "Consultorio 2",
-    },
-    {
-      id: 3,
-      name: "Araceli Young",
-      phone: "3453535345",
-      email: "ejemplo@gmail.com",
-      sex: "female",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPd1ag04qAxUqyFsA1waifXN9eNnce45gdKQ&s",
-      specialty: 'Internista',
-      clinic: "Consultorio 3",
-    }
-  ];
+    fetchServices();
+  }, []);
+  
+  // traer medicos destacados
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      const q = query(
+        collection(db, 'users'),
+        where('rol', '==', 'doctor'),
+        where('destacado', '==', true)
+      );
 
-  const appointments = [
-    {
-      id: 1,
-      doctor: "Juan Perez",
-      sex: "male",
-      image: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg",
-      date: "13 Sept. 2022",
-      hour: "10:00 AM"
-    },
-    {
-      id: 2,
-      doctor: "Maria Lopez",
-      sex: "female",
-      image: "https://cdn.agenciasinc.es/var/ezwebin_site/storage/images/_aliases/img_1col/noticias/solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales/3405721-5-esl-MX/Solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales.jpg",
-      date: "15 Sept. 2022",
-      hour: "03:30 PM"
-    },
-    {
-      id: 3,
-      doctor: "Araceli Young",
-      sex: "female",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPd1ag04qAxUqyFsA1waifXN9eNnce45gdKQ&s",
-      date: "20 Sept. 2022",
-      hour: "08:00 AM"
-    }
-  ];
+      const querySnapshot = await getDocs(q);
+
+      const doctorsList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setDoctors(doctorsList);
+    };
+
+    fetchDoctors();
+  }, []);
+
+  // traer citas reservadas
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const currentUserId = auth.currentUser.uid; // ID del paciente logueado
+
+        const citasSnapshot = await getDocs(
+          query(
+            collection(db, "citas"),
+            where("estado", "in", ["pendiente", "confirmada"]),
+            where("pacienteId", "==", currentUserId) // FILTRO
+          )
+        );
+
+        const citasConDoctor = await Promise.all(
+          citasSnapshot.docs.map(async (docCita) => {
+            const citaData = docCita.data();
+
+            const doctorSnapshot = await getDocs(
+              query(
+                collection(db, "users"),
+                where("__name__", "==", citaData.doctorId)
+              )
+            );
+
+            const doctorDoc = doctorSnapshot.docs[0]?.data();
+
+            return {
+              id: docCita.id,
+              fecha: citaData.fecha,
+              hora: citaData.hora,
+              doctorNombre: doctorDoc?.nombre,
+              doctorApellido: doctorDoc?.apellidoPaterno,
+              doctorSexo: doctorDoc?.sexo,
+              doctorFoto: doctorDoc?.photoURL,
+            };
+          })
+        );
+
+        setAppointments(citasConDoctor);
+      } catch (error) {
+        console.error("Error al cargar citas:", error);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
   //funcion para renderizar servicios
   const renderService = (item) => (
     <TouchableOpacity key={item.id} style={styles.serviceContainer}>
       <Image
-        source={{ uri: item.image }}
+        source={{ uri: item.imagen }}
         style={styles.roundImage}
         resizeMode="cover"
       />
-      <Text style={styles.typeServices}>{item.name}</Text>
+      <Text style={styles.typeServices}>{item.nombre}</Text>
     </TouchableOpacity>
   );
 
+  // renderizar doctores
   const renderDoctor = (item) => (
     <TouchableOpacity key={item.id} style={styles.doctorContainer}  
       onPress={() =>
@@ -112,11 +125,11 @@ const Home = () => {
         })
     }>
       <Image
-        source={{ uri: item.image }}
+        source={{ uri: item.photoURL }}
         style={styles.doctorsImage}
         resizeMode="cover"
       />
-      <Text style={styles.typeServices}>{item.name}</Text>
+      <Text style={styles.typeServices}>{item.nombre}</Text>
     </TouchableOpacity>
   );
 
@@ -129,9 +142,9 @@ const Home = () => {
   
         {/* info doctor */}
         <View style={styles.doctorInfo}>
-          <Image source={{ uri: item.image }} style={styles.appointmentImage} />
+          <Image source={{ uri: item.doctorFoto }} style={styles.appointmentImage} />
           <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
-            {item.sex === "female" ? "Dra." : "Dr."} {item.doctor}
+            {item.doctorSexo === "Femenino" ? "Dra." : "Dr."} {item.doctorNombre}{item.doctorApellido}
           </Text>
         </View>
   
@@ -141,18 +154,19 @@ const Home = () => {
         {/* fecha */}
         <View style={styles.dateInfo}>
           <Ionicons name="calendar-outline" size={24} color={PrimaryColor} />
-          <Text style={styles.dateText}>{item.date}</Text>
-          <Text style={styles.hourText}>{item.hour}</Text>
+          <Text style={styles.dateText}>{item.fecha}</Text>
+          <Text style={styles.hourText}>{item.hora}</Text>
         </View>
       </View>
     );
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }}
+      style={{ backgroundColor: '#fff' }}>
       <View style={styles.container}>
         {/*header*/}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+          <TouchableOpacity onPress={onLogout}>
             <Ionicons name="arrow-back-outline" size={24} color="black" />
           </TouchableOpacity>
 
@@ -184,14 +198,18 @@ const Home = () => {
           />
         </View>
 
-        <TouchableOpacity style={styles.servicesRow}>
+        <TouchableOpacity style={styles.servicesRow} onPress={() => setShowAllServices(!showAllServices)}>
           <Text style={styles.textServices}>Servicios</Text>
-          <Ionicons name="arrow-forward-outline" size={24} color={PrimaryColor} />
+          <Ionicons
+            name={showAllServices ? "chevron-up-outline" : "arrow-forward-outline"}
+            size={24}
+            color={PrimaryColor}
+          />
         </TouchableOpacity>
 
         {/*generar servicios*/}
         <View style={styles.servicesGrid}>
-          {services.map(renderService)}
+          {(showAllServices ? services : services.slice(0, 3)).map(renderService)}
         </View>
 
         <Text style={styles.textDoctors}>Medicos destacados</Text>
@@ -204,7 +222,13 @@ const Home = () => {
         <Text style={styles.textDoctors}>Próximas citas</Text>
 
         {/* citas del paciente */}
-        {appointments.map(renderAppointment)}
+        {appointments.length > 0 ? (
+          appointments.map(renderAppointment)
+        ) : (
+          <Text style={styles.noAppointmentsText}>
+            No tienes próximas citas pendientes
+          </Text>
+        )}
 
         <StatusBar style="auto" />
       </View>
@@ -326,7 +350,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     flex: 1,
-     overflow: 'hidden',
+    overflow: 'hidden',
   },
   appointmentImage: {
     width: 60,
@@ -362,6 +386,12 @@ const styles = StyleSheet.create({
     marginTop: 3,
     color: '#000',
   },
+  noAppointmentsText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+  }
 });
 
 export default Home;

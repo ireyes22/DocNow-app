@@ -4,6 +4,9 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import React, { useState } from 'react';
 import Pay from "./Pay";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
+import { getAuth } from "firebase/auth";
 
 const PrimaryColor = '#0A3B74';
 
@@ -22,28 +25,97 @@ LocaleConfig.defaultLocale = 'es';
 const RegisterAppointment = () => {
     const route = useRoute();
     const navigation = useNavigation();
-
+    const [selectedTime, setSelectedTime] = useState(null);
+    const TIMES_MATUTINO = ["9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM"];
+    const TIMES_VESPERTINO = ["4:00 PM", "4:30 PM", "5:00 PM", "5:30 PM"];
     const [selectedServices, setSelectedServices] = useState([]);
-
     const { doctor } = route.params;
+    const SERVICES = doctor.servicios;
+    const turno = doctor.horarioDisponible;
+    const [selected, setSelected] = useState("");
+    const TIMES = turno === "Vespertino"
+    ? TIMES_VESPERTINO
+    : TIMES_MATUTINO;
+    const auth = getAuth();
+    const patientId = auth.currentUser.uid;
+    const doctorId = doctor.id;
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0'); // los meses empiezan en 0
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayString = `${yyyy}-${mm}-${dd}`; // formato "YYYY-MM-DD"
 
-    const [selected, setSelected] = useState("2022-09-13");
-    
-    //datos para el calendario
+    // Crear un objeto de fechas marcadas para el calendario
     const markedDates = {
-      "2025-12-11": { marked: true, dotColor: PrimaryColor },
-      "2025-12-13": { selected: true, selectedColor: PrimaryColor, dotColor: PrimaryColor, marked: true },
-      "2025-12-20": { marked: true, dotColor: PrimaryColor },
-      "2025-12-27": { marked: true, dotColor: PrimaryColor },
+      [selected]: {
+        selected: true,
+        selectedColor: PrimaryColor, // color de la marca
+      }
     };
 
     const toggleService = (service) => {
-      setSelectedServices(prev =>
-        prev.includes(service)
-          ? prev.filter(s => s !== service)
-          : [...prev, service]
-      );
+      setSelectedServices(prev => {
+        const exists = prev.find(s => s.nombre === service.nombre);
+        if (exists) {
+          return prev.filter(s => s.nombre!== service.nombre);
+        }
+        return [...prev, service];
+      });
     };
+
+    // funcion para reservar una cita
+    const reserveAppointment = async () => {
+      if (!selected || selectedServices.length === 0) {
+        alert("Selecciona fecha y al menos un servicio");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "citas"), {
+          doctorId: doctorId,
+          pacienteId: patientId,
+          fecha: selected,
+          servicios: selectedServices,
+          hora: selectedTime,
+          total,
+          estado: "pendiente",
+          createdAt: Timestamp.now(),
+        });
+
+        navigation.navigate("Pay", {
+          doctorId,
+          fecha: selected,
+          hora: selectedTime,
+          servicios: selectedServices,
+          total,
+        });
+      } catch (error) {
+        console.error(error);
+        alert("Error al reservar la cita");
+      }
+    };
+
+    const goToPayment = () => {
+      if (!selected || selectedServices.length === 0 || !selectedTime) {
+        alert("Selecciona fecha, hora y al menos un servicio");
+        return;
+      }
+
+      navigation.navigate("Pay", {
+        doctorId,
+        patientId,
+        fecha: selected,
+        hora: selectedTime,
+        servicios: selectedServices,
+        total,
+      });
+    };
+
+    // suma precio servicios
+    const total = selectedServices.reduce(
+      (sum, service) => sum + Number(service.precio),
+      0
+    );
 
   return (
     <ScrollView contentContainerStyle={styles.scroll}>
@@ -59,57 +131,51 @@ const RegisterAppointment = () => {
             </TouchableOpacity>
         </View>
 
-        <Image source={{ uri: doctor.image }} style={styles.doctorImage} />
+        <Image source={{ uri: doctor.photoURL }} style={styles.doctorImage} />
 
         {/* doctor name and specialty */}
         <View style={styles.doctorName}>
-            <Text style={styles.nameDoctor}>{doctor.sex === "female" ? "Dra." : "Dr."} {doctor.name}</Text>
-            <Text style={styles.specialityDoctor}>{doctor.specialty}</Text>
+            <Text style={styles.nameDoctor}>{doctor.sexo === "Femenino" ? "Dra." : "Dr."} {doctor.nombre} {doctor.apellidoPaterno}</Text>
+            <Text style={styles.specialityDoctor}>{doctor.especialidad}</Text>
         </View>
 
         {/* services */}
         <View style={styles.contactContainer}>
             <Text style={styles.contactLabel}>Servicios disponibles</Text>
 
-            <View style={styles.contactRow}>
-                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                <Text style={styles.contactText}>Inyecciones</Text>
-                <Text style={styles.contactText}>$100</Text>
-            </View>
+            {SERVICES.length === 0 ? (
+            <Text style={styles.contactText}>
+                No hay servicios registrados
+            </Text>
+            ) : (
+              SERVICES.map((service, index) => (
+                  <View key={index} style={styles.contactRow}>
+                    <View style={styles.contactRow}>
+                        <Ionicons name="ellipse" size={12} color={PrimaryColor} />
+                        <Text style={styles.contactText}>{service.nombre}</Text>
+                        {/* <Text style={styles.contactText}>${service.precio}</Text> */}
+                    </View>
+                    <Text style={styles.contactText}>${service.precio}</Text>
 
-            <View style={styles.contactRow}>
-                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                <Text style={styles.contactText}>Rayos X</Text>
-                <Text style={styles.contactText}>$700</Text>
-            </View>
-
-            <View style={styles.contactRow}>
-                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                <Text style={styles.contactText}>Ultrasonidos</Text>
-                <Text style={styles.contactText}>$650</Text>
-            </View>
-
-            <View style={styles.contactRow}>
-                <Ionicons name="ellipse" size={15} color={PrimaryColor} />
-                <Text style={styles.contactText}>Consulta</Text>
-                <Text style={styles.contactText}>$400</Text>
-            </View>
+                    
+                  </View>
+              ))
+            )}
         </View>
 
         {/* contacts */}
         <View style={styles.contactContainer}>
           <Text style={styles.contactLabel}>Solicita tus servicios</Text>
 
-          {["Inyecciones", "Rayos X", "Ultrasonidos", "Consulta"].map(service => (
+          {SERVICES.map((service, index) => (
             <TouchableOpacity
-              key={service}
+              key={`${service.name}-${index}`}
               style={styles.contactRow}
               onPress={() => toggleService(service)}
-              activeOpacity={0.7}
             >
               <Ionicons
                 name={
-                  selectedServices.includes(service)
+                  selectedServices.some(s => s.nombre === service.nombre)
                     ? "checkbox"
                     : "square-outline"
                 }
@@ -117,22 +183,23 @@ const RegisterAppointment = () => {
                 color={PrimaryColor}
               />
 
-              <Text style={styles.contactText}>{service}</Text>
+              <Text style={styles.contactText}>
+                {service.nombre} - ${service.precio}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
-
 
         {/* availability */}
         <View style={styles.contactContainer}>
             <Text style={styles.contactLabel}>Disponibilidad</Text>
 
             <View style={styles.contactRow}>
-                <Text style={styles.contactText}>Lunes a Viernes</Text>
+                <Text style={styles.contactText}>{doctor.diasDisponibles}</Text>
             </View>
 
             <View style={styles.contactRow}>
-                <Text style={styles.contactText}>Matutino</Text>
+                <Text style={styles.contactText}>{doctor.horarioDisponible}</Text>
             </View>
         </View>
 
@@ -145,12 +212,9 @@ const RegisterAppointment = () => {
           <Calendar 
             style={styles.calendar}
             onDayPress={day => {
-              setSelected(day.dateString);
+              setSelected(day.dateString); 
             }}
-            markedDates={{
-              ...markedDates,
-              [selected]: { selected: true, selectedColor: PrimaryColor}
-            }}
+            markedDates={markedDates} 
             theme={{
               textMonthFontSize: 22,
               textMonthFontWeight: "bold",
@@ -158,6 +222,7 @@ const RegisterAppointment = () => {
               todayTextColor: "#0A3B74",
               dotColor: "#0A3B74",
             }}
+            minDate={todayString} // aquí deshabilitamos fechas pasadas
           />
         </View>
         
@@ -178,35 +243,42 @@ const RegisterAppointment = () => {
           <Text style={styles.contactLabel}>Horarios disponibles</Text>
 
           <View style={styles.timeGrid}>
-            <TouchableOpacity style={styles.timeButton}>
-              <Text style={styles.timeButtonSelectText}>9:00 AM</Text>
-            </TouchableOpacity>
+            {TIMES.map(time => {
+              const isSelected = selectedTime === time;
 
-            <TouchableOpacity style={styles.timeOfButton}>
-              <Text style={styles.timeButtonText}>9:30 AM</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.timeOfButton}>
-              <Text style={styles.timeButtonText}>10:00 AM</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.timeOfButton}>
-              <Text style={styles.timeButtonText}>10:30 AM</Text>
-            </TouchableOpacity>
+              return (
+                <TouchableOpacity
+                  key={time}
+                  style={[
+                    styles.timeSlot,
+                    isSelected && styles.timeSlotSelected
+                  ]}
+                  onPress={() => setSelectedTime(time)}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.timeText,
+                      isSelected && styles.timeTextSelected
+                    ]}
+                  >
+                    {time}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
+
           
         </View>
 
         <View style={styles.contactContainer}>
-          <Text style={styles.contactLabel}>Total: $400</Text>
+          <Text style={styles.contactLabel}>Total: ${total}</Text>
         </View>
 
         {/* button */}
         <TouchableOpacity style={styles.editButton}
-          onPress={() =>
-          navigation.navigate("Pay", {
-            doctor
-          })}
+          onPress={goToPayment}
         >
             <Text style={styles.editButtonText}>Pagar</Text>
         </TouchableOpacity>
@@ -282,6 +354,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
+    marginTop: 20,
   },
   contactRow: {
     flexDirection: 'row',
@@ -389,7 +462,26 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
-
+  timeSlot: {
+    width: "30%",
+    padding: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: PrimaryColor,
+    backgroundColor: "#fff",
+  },
+  timeSlotSelected: {
+    backgroundColor: PrimaryColor,
+  },
+  timeText: {
+    color: PrimaryColor,
+    fontWeight: "600",
+    fontSize: 15,
+  },
+  timeTextSelected: {
+    color: "#fff",
+  },
 });
 
 export default RegisterAppointment;

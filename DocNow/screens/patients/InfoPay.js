@@ -3,20 +3,54 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRoute,useNavigation } from '@react-navigation/native';
 import Settings from '../Settings';
 import Ready from './Ready';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../../firebaseConfig';
 
 const PrimaryColor = '#0A3B74';
 
-const Pay = () => {
+const InfoPay = ({ route }) => {
   const navigation = useNavigation();
-
+  const { doctorId, fecha, hora, servicios, total } = route.params;
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
   const [cardHolder, setCardHolder] = useState('');
 
+  const handleConfirmPayment = async () => {
+  if (!cardNumber || !expiry || !cvv || !cardHolder) {
+    alert('Por favor completa todos los datos de la tarjeta');
+    return;
+  }
+  
+  if (cardNumber.replace(/\s/g, '').length !== 16) {
+    alert('Por favor ingresa un número de tarjeta válido');
+    return;
+  }
+
+  try {
+
+    await addDoc(collection(db, 'citas'), {
+      doctorId,
+      pacienteId: auth.currentUser.uid,
+      fecha,
+      hora,
+      servicios,      
+      total,
+      estado: "pendiente",
+      pagado: true,
+      createdAt: serverTimestamp(),
+    });
+
+    navigation.navigate('Ready');
+
+  } catch (error) {
+    console.error('Error al guardar la cita:', error);
+    alert('Ocurrió un error al procesar el pago');
+  }
+};
   return (
       <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -45,7 +79,7 @@ const Pay = () => {
             style={styles.input}
             placeholder="0000 0000 0000 0000"
             keyboardType="numeric"
-            maxLength={19}
+            maxLength={16}
             value={cardNumber}
             onChangeText={setCardNumber}
           />
@@ -90,10 +124,7 @@ const Pay = () => {
 
         {/* button */}
         <TouchableOpacity style={styles.editButton}
-          onPress={() =>
-          navigation.navigate("Ready", {
-            
-          })}
+          onPress={handleConfirmPayment}
         >
             <Text style={styles.editButtonText}>Confirmar</Text>
         </TouchableOpacity>
@@ -176,4 +207,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Pay;
+export default InfoPay;

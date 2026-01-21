@@ -6,44 +6,82 @@ import { ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Settings from '../Settings';
 import Confirm from './Confirm';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import { useEffect } from 'react';
+import { getAuth } from "firebase/auth";
 
 const PrimaryColor = '#0A3B74';
 
 const Notifications = () => {
   const navigation = useNavigation();
+  const [appointments, setAppointments] = useState([]);
 
-  const appointments = [
-    {
-      id: 1,
-      name: "Juan Perez",
-      sex: "male",
-      image: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg",
-      date: "13 Sept. 2022",
-      hour: "10:00 AM"
-    },
-    {
-      id: 2,
-      name: "Maria Lopez",
-      sex: "female",
-      image: "https://cdn.agenciasinc.es/var/ezwebin_site/storage/images/_aliases/img_1col/noticias/solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales/3405721-5-esl-MX/Solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales.jpg",
-      date: "15 Sept. 2022",
-      hour: "03:30 PM"
-    },
-    {
-      id: 3,
-      name: "Araceli Young",
-      sex: "female",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPd1ag04qAxUqyFsA1waifXN9eNnce45gdKQ&s",
-      date: "20 Sept. 2022",
-      hour: "08:00 AM"
-    }
-  ];
+  // traer citas reservadas
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const auth = getAuth();
+        const userId = auth.currentUser?.uid;
+
+        if (!userId) return;
+
+        const citasSnapshot = await getDocs(
+          query(
+            collection(db, "citas"),
+            where("estado", "==", "pendiente"),
+            where("pacienteId", "==", userId)
+          )
+        );
+
+        const citasConDoctor = await Promise.all(
+          citasSnapshot.docs.map(async (docCita) => {
+            const citaData = docCita.data();
+
+            const doctorSnapshot = await getDocs(
+              query(
+                collection(db, "users"),
+                where("__name__", "==", citaData.doctorId)
+              )
+            );
+
+            const doctorDoc = doctorSnapshot.docs[0]?.data();
+
+            return {
+              id: docCita.id,
+              fecha: citaData.fecha,
+              hora: citaData.hora,
+              doctorNombre: doctorDoc?.nombre,
+              doctorApellido: doctorDoc?.apellidoPaterno,
+              doctorSexo: doctorDoc?.sexo,
+              doctorFoto: doctorDoc?.photoURL,
+            };
+          })
+        );
+
+        setAppointments(citasConDoctor);
+      } catch (error) {
+        console.error("Error al cargar citas:", error);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
    //funcion para renderizar cada tarjeta
   const renderAppointment = (item) => (
     <TouchableOpacity
       key={item.id}
-      onPress={() => navigation.navigate("Confirm", { doctor: item })}
+      onPress={() => navigation.navigate("Confirm", {
+        appointmentId: item.id,
+        doctor: {
+          image: item.doctorFoto,
+          name: `${item.doctorNombre} ${item.doctorApellido}`,
+          sex: item.doctorSexo,
+          date: item.fecha,
+          hour: item.hora,
+        },
+      })}
     >
     <View style={styles.appointmentCard}>
       
@@ -52,9 +90,9 @@ const Notifications = () => {
 
       {/* info doctor */}
       <View style={styles.doctorInfo}>
-        <Image source={{ uri: item.image }} style={styles.appointmentImage} />
+        <Image source={{ uri: item.doctorFoto}} style={styles.appointmentImage} />
         <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
-          {item.sex === "female" ? "Dra." : "Dr."} {item.name}
+          {item.doctorSexo === "Femenino" ? "Dra." : "Dr."} {item.doctorNombre}{item.doctorApellido}
         </Text>
       </View>
 
@@ -64,8 +102,8 @@ const Notifications = () => {
       {/* fecha */}
       <View style={styles.dateInfo}>
         <Ionicons name="calendar-outline" size={24} color={PrimaryColor} />
-        <Text style={styles.dateText}>{item.date}</Text>
-        <Text style={styles.hourText}>{item.hour}</Text>
+        <Text style={styles.dateText}>{item.fecha}</Text>
+        <Text style={styles.hourText}>{item.hora}</Text>
       </View>
     </View>
     </TouchableOpacity>
@@ -92,7 +130,14 @@ const Notifications = () => {
 
         <Text style={styles.textDoctors}>Notificaciones</Text>
 
-        {appointments.map(renderAppointment)}
+        {/* citas del paciente */}
+        {appointments.length > 0 ? (
+          appointments.map(renderAppointment)
+        ) : (
+          <Text style={styles.noAppointmentsText}>
+            No tienes notificaciones
+          </Text>
+        )}
 
         <StatusBar style="auto" />
       </ScrollView>
@@ -189,6 +234,12 @@ const styles = StyleSheet.create({
     marginTop: 3,
     color: '#000',
   },
+  noAppointmentsText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+  }
 });
 
 export default Notifications;
