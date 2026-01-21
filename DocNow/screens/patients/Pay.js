@@ -3,15 +3,17 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, TextInput } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Settings from '../Settings';
 import InfoPay from './InfoPay';
+import { auth, db } from '../../firebaseConfig';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 const PrimaryColor = '#0A3B74';
 
-const Pay = () => {
+const Pay = ({ route }) => {
   const navigation = useNavigation();
-
+  const { doctorId, pacienteId, fecha, hora, servicios, total } = route.params;
 
   return (
       <View style={styles.container}>
@@ -36,9 +38,16 @@ const Pay = () => {
 
         <TouchableOpacity style={styles.editButton}
           onPress={() =>
-          navigation.navigate("InfoPay", {
-
-          })}
+            navigation.navigate("InfoPay", {
+              pacienteId: auth.currentUser.uid,
+              doctorId: doctorId,  
+              fecha: fecha,
+              hora: hora,
+              servicios: servicios,
+              total: total,
+              tipo: 'credito',
+            })
+          }
         >
             <Ionicons name="card-outline" size={25} color='#000000' />
             <Text style={styles.editButtonText}>Agregar tarjeta crédito</Text>
@@ -46,9 +55,16 @@ const Pay = () => {
 
         <TouchableOpacity style={styles.editButton}
           onPress={() =>
-          navigation.navigate("InfoPay", {
-
-          })}
+            navigation.navigate("InfoPay", {
+              pacienteId: auth.currentUser.uid,
+              doctorId: doctorId,  
+              fecha: fecha,
+              hora: hora,
+              servicios: servicios,
+              total: total,
+              tipo: 'debito',
+            })
+          }
         >
             <Ionicons name="card-outline" size={25} color='#000000' />
             <Text style={styles.editButtonText}>Agregar tarjeta debito</Text>

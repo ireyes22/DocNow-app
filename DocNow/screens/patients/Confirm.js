@@ -4,15 +4,50 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
 
 const PrimaryColor = '#0A3B74';
 const DangerColor = "#8B0000";
 
-const Confirm = () => {
-  const navigation = useNavigation();
-    const route = useRoute();
-  
-    const { doctor } = route.params;
+  // funcion para confirmar la cita
+  const Confirm = () => {
+    const navigation = useNavigation();
+      const route = useRoute();
+      const { doctor, appointmentId } = route.params;
+
+      const confirmAppointment = async () => {
+    try {
+      const ref = doc(db, "citas", appointmentId);
+
+      await updateDoc(ref, {
+        estado: "confirmada",
+      });
+
+      alert("Cita confirmada");
+      navigation.navigate("Home");
+    } catch (error) {
+      console.error(error);
+      alert("Error al confirmar la cita");
+    }
+  };
+
+  // funcion para cancelar cita
+  const cancelAppointment = async () => {
+    try {
+      const ref = doc(db, "citas", appointmentId);
+
+      await updateDoc(ref, {
+        estado: "cancelada",
+      });
+
+      alert("Cita cancelada");
+      navigation.navigate("Home");
+    } catch (error) {
+      console.error(error);
+      alert("Error al cancelar la cita");
+    }
+  };
 
    //funcion para renderizar cada tarjeta
   const renderAppointment = (doctor) => (
@@ -25,7 +60,7 @@ const Confirm = () => {
       <View style={styles.doctorInfo}>
         <Image source={{ uri: doctor.image }} style={styles.appointmentImage} />
         <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
-          {doctor.sex === "female" ? "Dra." : "Dr."} {doctor.name}
+           {doctor.sex === "Femenino" ? "Dra." : "Dr."} {doctor.name}
         </Text>
       </View>
 
@@ -64,11 +99,11 @@ const Confirm = () => {
 
         {renderAppointment(doctor)}
 
-        <TouchableOpacity style={styles.confirmButton} onPress={() => setEditMode(true)}>
+        <TouchableOpacity style={styles.confirmButton} onPress={confirmAppointment}>
             <Text style={styles.confirmButtonText}>Confirmar</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.cancelButton} onPress={cancelAppointment}>
             <Text style={styles.cancelButtonText}>Cancelar</Text>
         </TouchableOpacity>
         

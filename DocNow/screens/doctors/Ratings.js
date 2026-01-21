@@ -4,7 +4,6 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import {  useRoute, useNavigation} from '@react-navigation/native';
 
-
 const PrimaryColor = '#0A3B74';
 
 const Ratings = () => {
@@ -49,7 +48,8 @@ const Ratings = () => {
     );
 
     return(
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}
+      style={{ backgroundColor: '#fff' }}>
             <View style={styles.container}>
                 {/*header*/}
                 <View style={styles.header}>

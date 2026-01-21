@@ -12,11 +12,6 @@ const SecondaryColor = '#498FC0';
 const Pay = () => {
   const navigation = useNavigation();
 
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvv, setCvv] = useState('');
-  const [cardHolder, setCardHolder] = useState('');
-
   return (
       <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -43,7 +38,7 @@ const Pay = () => {
 
         {/* button */}
         <TouchableOpacity style={styles.editButton}
-           onPress={() => navigation.navigate("Home")}
+           onPress={() => navigation.navigate("HomePatient")}
         >
             <Text style={styles.editButtonText}>Siguiente</Text>
         </TouchableOpacity>

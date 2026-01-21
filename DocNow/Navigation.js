@@ -31,6 +31,7 @@ import NotificationsDoc from "./screens/doctors/Notifications";
 import CreateNotes from "./screens/doctors/CreateNotes";
 import SeeNotes from "./screens/doctors/SeeNotes";
 import Ratings from "./screens/doctors/Ratings";
+import NotesPatient from "./screens/doctors/NotesPatient";
 
 // screens administrador
 import AdminHome from "./screens/admin/HomeAdmin";
@@ -55,16 +56,20 @@ function AuthStack({ onLogin }) {
       <Stack.Screen name="Login">
         {(props) => <Login {...props} onLogin={onLogin} />}
       </Stack.Screen>
-      <Stack.Screen name="Register" component={Register} />
+      <Stack.Screen name="Register">
+        {(props) => <Register {...props} onLogin={onLogin} />}
+      </Stack.Screen>
       <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
     </Stack.Navigator>
   );
 }
 
-function PatientStack() {
+function PatientStack({onLogout}) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Home" component={HomePatient} />
+      <Stack.Screen name="HomePatient">
+        {(props) => <HomePatient {...props} onLogout={onLogout} />}
+      </Stack.Screen>
       <Stack.Screen name="SeeDoctor" component={SeeDoctor} />
       <Stack.Screen name="RegisterAppointment" component={RegisterAppointment} />
       <Stack.Screen name="Pay" component={Pay} />
@@ -95,6 +100,17 @@ function NotificationsStack() {
   );
 }
 
+function ProfilePatientStack({ onLogout }) {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Profile">
+        {(props) => <Profile {...props} onLogout={onLogout} />}
+      </Stack.Screen>
+      <Stack.Screen name="Settings" component={Settings} />
+    </Stack.Navigator>
+  );
+}
+
 function DoctorStack({ onLogout }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -105,11 +121,14 @@ function DoctorStack({ onLogout }) {
     </Stack.Navigator>
   );
 }
-function  HomeDoctorStack() {
+function  HomeDoctorStack({onLogout}) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Patients" component={Patients} />
+      <Stack.Screen name="Patients">
+        {(props) => <Patients {...props} onLogout={onLogout} />}
+      </Stack.Screen>
       <Stack.Screen name="SeeNotes" component={SeeNotes} />
+      <Stack.Screen name="NotesPatient" component={NotesPatient} />
     </Stack.Navigator>
   );
 }
@@ -120,6 +139,7 @@ function AppointmentsStack() {
       <Stack.Screen name="Appointments" component={Appointments} />
       <Stack.Screen name="CreateNotes" component={CreateNotes} />
       <Stack.Screen name="SeeNotes" component={SeeNotes} />
+      <Stack.Screen name="NotesPatient" component={NotesPatient} />
     </Stack.Navigator>
   );
 }
@@ -167,13 +187,14 @@ function PatientTabs({ onLogout }) {
     >
       <Tab.Screen 
         name="Home" 
-        component={PatientStack} 
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" color={color} size={size} />
           ),
         }}
-      />
+      >
+        {(props) => <PatientStack {...props} onLogout={onLogout} />}
+      </Tab.Screen> 
       <Tab.Screen 
         name="Citas" 
         component={AppointmentStack} 
@@ -200,7 +221,7 @@ function PatientTabs({ onLogout }) {
           ),
         }}
       >
-        {(props) => <Profile {...props} onLogout={onLogout} />}
+        {(props) => <ProfilePatientStack {...props} onLogout={onLogout} />}
       </Tab.Screen>
     </Tab.Navigator>
   );
@@ -218,13 +239,14 @@ function DoctorTabs({ onLogout }) {
     >
       <Tab.Screen
         name="Pacientes"
-        component={HomeDoctorStack}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people" color={color} size={size} />
           ),
         }}
-      />
+      >
+        {(props) => <HomeDoctorStack {...props} onLogout={onLogout} />}
+      </Tab.Screen>
 
       <Tab.Screen
         name="Citas"
@@ -260,9 +282,25 @@ function DoctorTabs({ onLogout }) {
   );
 }
 
+function AppByRole({ userRole, onLogout }) {
+  if (userRole === "paciente") {
+    return <PatientTabs onLogout={onLogout} />;
+  }
+
+  if (userRole === "doctor") {
+    return <DoctorTabs onLogout={onLogout} />;
+  }
+
+  if (userRole === "admin") {
+    return <AdminStack onLogout={onLogout} />;
+  }
+
+  return null;
+}
+
 export default function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState(null); // "patient" | "doctor"
+  const [userRole, setUserRole] = useState(null);
 
   const logout = () => {
     setIsLoggedIn(false);
@@ -281,19 +319,17 @@ export default function Navigation() {
           <RootStack.Screen name="Auth">
             {(props) => <AuthStack {...props} onLogin={login} />}
           </RootStack.Screen>
-        ) : userRole === "paciente" ? (
-          <RootStack.Screen name="PatientApp">
-            {(props) => <PatientTabs {...props} onLogout={logout} />}
+        ) : (
+          <RootStack.Screen name="App">
+            {(props) => (
+              <AppByRole
+                {...props}
+                userRole={userRole}
+                onLogout={logout}
+              />
+            )}
           </RootStack.Screen>
-        ) : userRole === "doctor" ? (
-          <RootStack.Screen name="DoctorApp">
-            {(props) => <DoctorStack {...props} onLogout={logout} />}
-          </RootStack.Screen>
-        ) : userRole === "admin" ? (
-          <RootStack.Screen name="AdminApp">
-            {(props) => <AdminStack {...props} onLogout={logout} />}
-          </RootStack.Screen>
-        ) : null}
+        )}
       </RootStack.Navigator>
     </NavigationContainer>
   );

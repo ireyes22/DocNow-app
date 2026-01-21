@@ -6,7 +6,9 @@ import { Calendar, LocaleConfig } from 'react-native-calendars';
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db, auth } from '../../firebaseConfig';
+import { useEffect } from 'react';
 
 const PrimaryColor = '#0A3B74';
 const SecondaryColor = '#498FC0';
@@ -25,43 +27,67 @@ LocaleConfig.defaultLocale = 'es';
   
 // pantalla de mis citas
 const MyAppointments = () => {
+  const [appointments, setAppointments] = useState([]);
+  const [markedDates, setMarkedDates] = useState({});
 
-  const [selected, setSelected] = useState("2022-09-13");
+  // traer citas reservadas
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const currentUserId = auth.currentUser.uid; // ID del paciente logueado
 
-  //datos para el calendario
-  const markedDates = {
-    "2025-12-11": { marked: true, dotColor: PrimaryColor },
-    "2025-12-13": { selected: true, selectedColor: PrimaryColor, dotColor: PrimaryColor, marked: true },
-    "2025-12-20": { marked: true, dotColor: PrimaryColor },
-    "2025-12-27": { marked: true, dotColor: PrimaryColor },
-  };
+        const citasSnapshot = await getDocs(
+          query(
+            collection(db, "citas"),
+            where("estado", "in", ["pendiente", "confirmada"]),
+            where("pacienteId", "==", currentUserId) // FILTRO
+          )
+        );
 
-  const appointments = [
-    {
-      id: 1,
-      doctor: "Juan Perez",
-      sex: "male",
-      image: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg",
-      date: "13 Dic. 2025",
-      hour: "10:00 AM"
-    },
-    {
-      id: 2,
-      doctor: "Maria Lopez",
-      sex: "female",
-      image: "https://cdn.agenciasinc.es/var/ezwebin_site/storage/images/_aliases/img_1col/noticias/solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales/3405721-5-esl-MX/Solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales.jpg",
-      date: "20 Dic. 2025",
-      hour: "03:30 PM"
-    },
-    {
-      id: 3,
-      doctor: "Araceli Young",
-      sex: "female",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPd1ag04qAxUqyFsA1waifXN9eNnce45gdKQ&s",
-      date: "27 Dic. 2025",
-      hour: "08:00 AM"
-    }
-  ];
+        const citasConDoctor = await Promise.all(
+          citasSnapshot.docs.map(async (docCita) => {
+            const citaData = docCita.data();
+
+            const doctorSnapshot = await getDocs(
+              query(
+                collection(db, "users"),
+                where("__name__", "==", citaData.doctorId)
+              )
+            );
+
+            const doctorDoc = doctorSnapshot.docs[0]?.data();
+
+            return {
+              id: docCita.id,
+              fecha: citaData.fecha,
+              hora: citaData.hora,
+              doctorNombre: doctorDoc?.nombre,
+              doctorApellido: doctorDoc?.apellidoPaterno,
+              doctorSexo: doctorDoc?.sexo,
+              doctorFoto: doctorDoc?.photoURL,
+            };
+          })
+        );
+
+        setAppointments(citasConDoctor);
+
+        // marcar fechas en el calendario
+        const newMarkedDates = {};
+          citasConDoctor.forEach(cita => {
+            newMarkedDates[cita.fecha] = {
+            marked: true,
+            dotColor: PrimaryColor,
+            activeOpacity: 0,
+          };
+        });
+        setMarkedDates(newMarkedDates);
+      } catch (error) {
+        console.error("Error al cargar citas:", error);
+      }
+    };
+
+    fetchAppointments();
+  }, []);
 
   //funcion para renderizar cada tarjeta
   const renderAppointment = (item) => (
@@ -72,9 +98,9 @@ const MyAppointments = () => {
 
       {/* info doctor */}
       <View style={styles.doctorInfo}>
-        <Image source={{ uri: item.image }} style={styles.appointmentImage} />
-        <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
-          Dr{item.sex === "female" ? "a" : ""}. {item.doctor} 
+        <Image source={{ uri: item.doctorFoto }} style={styles.appointmentImage} />
+        <Text style={styles.doctorName} numberOfLines={100} ellipsizeMode="tail">
+         {item.doctorSexo === "Femenino" ? "Dra." : "Dr."} {item.doctorNombre} {item.doctorApellido} 
         </Text>
       </View>
 
@@ -84,27 +110,21 @@ const MyAppointments = () => {
       {/* fecha */}
       <View style={styles.dateInfo}>
         <Ionicons name="calendar-outline" size={24} color={PrimaryColor} />
-        <Text style={styles.dateText}>{item.date}</Text>
-        <Text style={styles.hourText}>{item.hour}</Text>
+        <Text style={styles.dateText}>{item.fecha}</Text>
+        <Text style={styles.hourText}>{item.hora}</Text>
       </View>
     </View>
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }}
+      style={{ backgroundColor: '#fff' }}>
       <View style={styles.container}>
           {/* Calendario */}
           <View style={{ width: '100%' }}>
             <Calendar 
               style={styles.calendar}
               locales={'es'}
-              onDayPress={day => {
-                setSelected(day.dateString);
-              }}
-              markedDates={{
-                ...markedDates,
-                [selected]: { selected: true, selectedColor: PrimaryColor}
-              }}
               theme={{
                 textMonthFontSize: 22,
                 textMonthFontWeight: "bold",
@@ -112,10 +132,18 @@ const MyAppointments = () => {
                 todayTextColor: "#0A3B74",
                 dotColor: "#0A3B74",
               }}
+              markedDates={markedDates} 
             />
           </View>
 
-          {appointments.map(renderAppointment)}
+          {/* citas del paciente */}
+          {appointments.length > 0 ? (
+            appointments.map(renderAppointment)
+          ) : (
+            <Text style={styles.noAppointmentsText}>
+              No tienes próximas citas pendientes
+            </Text>
+          )}
 
           <StatusBar style="auto" />
         </View>
@@ -243,7 +271,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 10,
-    elevation: 3,
+    elevation: 3, 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -338,6 +366,12 @@ const styles = StyleSheet.create({
   evaluateText: {
     color: PrimaryColor,
   },
+  noAppointmentsText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+  }
 });
 
 const Tab = createMaterialTopTabNavigator();

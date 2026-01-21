@@ -1,44 +1,71 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { auth, db } from '../../firebaseConfig';
 
 const PrimaryColor = '#0A3B74';
 
 const Notifications = () => {
     const navigation = useNavigation();
+    const [appointments, setAppointments] = useState([]);
 
-    const appointments = [
-    {
-      id: 1,
-      name: "Daniel flores Zazueta",
-      sex: "male",
-      image: "https://imgs.search.brave.com/PyiinRrY5IiCJP7f0qr4dC0_-gnIw5e2twwoXwRgGzI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/Zm90by1ncmF0aXMv/aG9tYnJlLWZlbGl6/LXBpZS1wbGF5YV8x/MDc0MjAtOTg2My5q/cGc_c2VtdD1haXNf/aHlicmlkJnc9NzQw/JnE9ODA",
-      date: "13 Sept. 2022",
-      hour: "10:00 AM",
-      status : "Confirmado"
-    },
-    {
-      id: 2,
-      name: "David Montoya Lopez",
-      sex: "male",
-      image: "https://imgs.search.brave.com/GfUo1G7t01wG8lxoeHybzFdEqI9i4TtrddTz64ZjqwE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTM4/ODY0ODYxNy9lcy9m/b3RvL2pvdmVuLWNh/dWMlQzMlQTFzaWNv/LWNvbmZpYWRvLWNv/bi1yb3BhLWNhc3Vh/bC1kZS1tZXpjbGls/bGEtY29uLWxvcy1i/cmF6b3MtY3J1emFk/b3MtbWlyYW5kby1h/LWxhLmpwZz9zPTYx/Mng2MTImdz0wJms9/MjAmYz1UWE9WckJi/S3VPQ3dqUVR0NGtP/VTdJUGIwTTdxeXhz/bVVPMi1vVjlEVm13/PQ",
-      date: "15 Sept. 2022",
-      hour: "03:30 PM",
-      status : "Pendiente"
-    },
-    {
-      id: 3,
-      name: "Maria Jose Perez Luna",
-      sex: "female",
-      image: "https://imgs.search.brave.com/DYV3BxkQ8UMDNBQZ0FGyoj6mhA-PVkTQLImT7hBztMs/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzA3LzEzLzM4LzM5/LzM2MF9GXzcxMzM4/Mzk5NV9OTnZKZ2U1/emFpbVFsdzRXVW1n/U3ZHMVhMVUdzcTBI/ai5qcGc",
-      date: "20 Sept. 2022",
-      hour: "08:00 AM",
-      status : "Cancelado"
+    useEffect(() => {
+  const fetchNotifications = async () => {
+    try {
+      const doctorId = auth.currentUser.uid;
+
+      // Traer citas del doctor
+      const citasSnapshot = await getDocs(
+        query(
+          collection(db, 'citas'),
+          where('doctorId', '==', doctorId)
+        )
+      );
+
+      const notificationsList = await Promise.all(
+        citasSnapshot.docs.map(async (docCita) => {
+          const cita = docCita.data();
+
+          // Traer datos del paciente
+          const patientSnapshot = await getDocs(
+            query(
+              collection(db, 'users'),
+              where('__name__', '==', cita.pacienteId)
+            )
+          );
+
+          const patientDoc = patientSnapshot.docs[0]?.data();
+
+          return {
+            id: docCita.id,
+
+            name:
+              patientDoc?.nombre +
+              ' ' +
+              patientDoc?.apellidoPaterno +
+              ' ' +
+              patientDoc?.apellidoMaterno,
+
+            image: patientDoc?.photoURL || '',
+            date: cita.fecha,
+            hour: cita.hora,
+            status: cita.estado,
+          };
+        })
+      );
+
+      setAppointments(notificationsList);
+    } catch (error) {
+      console.error('Error al cargar notificaciones:', error);
     }
-  ];
+  };
+
+  fetchNotifications();
+}, []);
 
   //funcion para renderizar cada tarjeta
   const renderAppointment = (item) => (
@@ -51,7 +78,7 @@ const Notifications = () => {
       <View style={styles.doctorInfo}>
         <Image source={{ uri: item.image }} style={styles.appointmentImage} />
         <View>
-          <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
+          <Text style={styles.doctorName} numberOfLines={100} ellipsizeMode="tail">
               {item.name}
           </Text>
           <Text>{item.status}</Text>
@@ -91,7 +118,13 @@ const Notifications = () => {
 
         <Text style={styles.textDoctors}>Notificaciones</Text>
 
-        {appointments.map(renderAppointment)}
+        {appointments.length > 0 ? (
+          appointments.map(renderAppointment)
+        ) : (
+          <Text style={{ textAlign: 'center', marginTop: 20 }}>
+            No tienes notificaciones
+          </Text>
+        )}
 
         <StatusBar style="auto" />
       </ScrollView>
@@ -188,6 +221,12 @@ container: {
     marginTop: 3,
     color: '#000',
   },
+  noAppointmentsText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+  }
 });
 
 export default Notifications;

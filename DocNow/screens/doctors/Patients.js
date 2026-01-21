@@ -3,54 +3,68 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { useNavigation, CommonActions } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db, auth } from '../../firebaseConfig';
+import { useEffect } from 'react';
 
 const PrimaryColor = '#0A3B74';
 
-const Patients = () => {
+const Patients = ({onLogout}) => {
   const navigation = useNavigation();
-
-  const handleLogout = () => {
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: 'Auth' }],
-      })
-    );
-  };
+  const [patients, setPatients] = useState([]);
     
-  const archivades = [
-  {
-    id: 1,
-    name: "Daniel flores Zazueta",
-    sex: "male",
-    image: "https://imgs.search.brave.com/PyiinRrY5IiCJP7f0qr4dC0_-gnIw5e2twwoXwRgGzI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/Zm90by1ncmF0aXMv/aG9tYnJlLWZlbGl6/LXBpZS1wbGF5YV8x/MDc0MjAtOTg2My5q/cGc_c2VtdD1haXNf/aHlicmlkJnc9NzQw/JnE9ODA",
-    date: "13 Sept. 2022",
-    service: "Rayos X",
-    hour: "10:00 AM",
-    status : "Confirmado"
-  },
-  {
-    id: 2,
-    name: "David Montoya Lopez",
-    sex: "male",
-    image: "https://imgs.search.brave.com/GfUo1G7t01wG8lxoeHybzFdEqI9i4TtrddTz64ZjqwE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTM4/ODY0ODYxNy9lcy9m/b3RvL2pvdmVuLWNh/dWMlQzMlQTFzaWNv/LWNvbmZpYWRvLWNv/bi1yb3BhLWNhc3Vh/bC1kZS1tZXpjbGls/bGEtY29uLWxvcy1i/cmF6b3MtY3J1emFk/b3MtbWlyYW5kby1h/LWxhLmpwZz9zPTYx/Mng2MTImdz0wJms9/MjAmYz1UWE9WckJi/S3VPQ3dqUVR0NGtP/VTdJUGIwTTdxeXhz/bVVPMi1vVjlEVm13/PQ",
-    date: "15 Sept. 2022",
-    hour: "03:30 PM",
-    service: "Consulta",
-    status : "Pendiente"
-  },
-  {
-    id: 3,
-    name: "Maria Jose Perez Luna",
-    sex: "female",
-    image: "https://imgs.search.brave.com/DYV3BxkQ8UMDNBQZ0FGyoj6mhA-PVkTQLImT7hBztMs/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzA3LzEzLzM4LzM5/LzM2MF9GXzcxMzM4/Mzk5NV9OTnZKZ2U1/emFpbVFsdzRXVW1n/U3ZHMVhMVUdzcTBI/ai5qcGc",
-    date: "20 Sept. 2022",
-    hour: "08:00 AM",
-    service: "Consulta",
-    status : "Cancelado"
-  }
-  ];
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const currentDoctorId = auth.currentUser.uid; // doctor logueado
+
+        // 1. Traer citas pendientes o confirmadas de este doctor
+        const citasSnapshot = await getDocs(
+          query(
+            collection(db, "citas"),
+            where("estado", "in", ["pendiente", "confirmada"]),
+            where("doctorId", "==", currentDoctorId)
+          )
+        );
+
+        // 2. Por cada cita, traer datos del paciente
+        const patientsList = await Promise.all(
+          citasSnapshot.docs.map(async (docCita) => {
+            const citaData = docCita.data();
+
+            const patientSnapshot = await getDocs(
+              query(
+                collection(db, "users"),
+                where("__name__", "==", citaData.pacienteId)
+              )
+            );
+
+            const patientDoc = patientSnapshot.docs[0]?.data();
+
+            return {
+              id: docCita.id,
+              pacienteId: citaData.pacienteId,
+              name: patientDoc?.nombre + " " + patientDoc?.apellidoPaterno + " " + patientDoc?.apellidoMaterno,
+              sex: patientDoc?.sexo,
+              image: patientDoc?.photoURL,
+              date: citaData.fecha,
+              hour: citaData.hora,
+              service: citaData.servicio,
+              status: citaData.estado,
+            };
+          })
+        );
+
+        setPatients(patientsList);
+
+      } catch (error) {
+        console.error("Error al cargar pacientes:", error);
+      }
+    };
+
+    fetchPatients();
+  }, []);
 
   const renderArchivades = (item) => (
     <View key={item.id} style={styles.archiveCard}>
@@ -58,7 +72,7 @@ const Patients = () => {
       <View style={styles.doctorInfo}>
         <Image source={{ uri: item.image }} style={styles.archiveImage} />
         <View style={styles.archiveInfo}>
-          <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
+          <Text style={styles.doctorName} numberOfLines={100} ellipsizeMode="tail">
             {item.name}
           </Text>
         </View>
@@ -67,16 +81,6 @@ const Patients = () => {
       {/* boton */}
       <View style={styles.dateInfo}>
         <TouchableOpacity style={styles.evaluateButton} 
-        //   onPress={() =>
-        //   navigation.navigate("SeeNotes", {
-        //     patient: {
-        //       name: item.name,
-        //       date: item.date,
-        //       service: item.service,
-        //     }
-        //   })
-        // }
-
           onPress={() =>
           navigation.navigate("SeeNotes", {
             patient: {
@@ -98,7 +102,7 @@ const Patients = () => {
       <ScrollView contentContainerStyle={styles.scroll}>
         {/*header*/}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+          <TouchableOpacity onPress={onLogout}>
               <Ionicons name="arrow-back-outline" size={24} color="black" />
           </TouchableOpacity>
 
@@ -114,7 +118,13 @@ const Patients = () => {
 
         <Text style={styles.textDoctors}>Pacientes</Text>
         
-        {archivades.map(renderArchivades)}
+        {patients.length > 0 ? (
+          patients.map(renderArchivades)
+        ) : (
+          <Text style={styles.noAppointmentsText}>
+            No tienes pacientes con citas hoy
+          </Text>
+        )}
 
         <StatusBar style="auto" />
       </ScrollView>
@@ -199,6 +209,12 @@ const styles = StyleSheet.create({
   evaluateText: {
     color: '#fff',
   },
+  noAppointmentsText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+  }
 });
 
 export default Patients;

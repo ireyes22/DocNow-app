@@ -4,51 +4,90 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView} from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useNavigation } from '@react-navigation/native';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { auth, db } from '../../firebaseConfig';
+import { useEffect } from 'react';
+
 
 const PrimaryColor = '#0A3B74';
 const SecondaryColor = '#498FC0';
 
 const Appointments = () => {
-    const navigation = useNavigation();
+  const navigation = useNavigation();
+  const [patients, setPatients] = useState([]);
 
-    const archivades = [
-    {
-      id: 1,
-      name: "Daniel flores Zazueta",
-      sex: "male",
-      age: 21,
-      service: "Rayos X",
-      image: "https://imgs.search.brave.com/PyiinRrY5IiCJP7f0qr4dC0_-gnIw5e2twwoXwRgGzI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/Zm90by1ncmF0aXMv/aG9tYnJlLWZlbGl6/LXBpZS1wbGF5YV8x/MDc0MjAtOTg2My5q/cGc_c2VtdD1haXNf/aHlicmlkJnc9NzQw/JnE9ODA",
-      date: "13 Sept. 2022",
-      hour: "10:00 AM",
-      status : "Confirmado",
-      clinic: 15,
-    },
-    {
-      id: 2,
-      name: "David Montoya Lopez",
-      sex: "male",
-      age: 21,
-      service: "Consulta",
-      image: "https://imgs.search.brave.com/GfUo1G7t01wG8lxoeHybzFdEqI9i4TtrddTz64ZjqwE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTM4/ODY0ODYxNy9lcy9m/b3RvL2pvdmVuLWNh/dWMlQzMlQTFzaWNv/LWNvbmZpYWRvLWNv/bi1yb3BhLWNhc3Vh/bC1kZS1tZXpjbGls/bGEtY29uLWxvcy1i/cmF6b3MtY3J1emFk/b3MtbWlyYW5kby1h/LWxhLmpwZz9zPTYx/Mng2MTImdz0wJms9/MjAmYz1UWE9WckJi/S3VPQ3dqUVR0NGtP/VTdJUGIwTTdxeXhz/bVVPMi1vVjlEVm13/PQ",
-      date: "15 Sept. 2022",
-      hour: "03:30 PM",
-      status : "Pendiente",
-      clinic: 12,
-    },
-    {
-      id: 3,
-      name: "Maria Jose Perez Luna",
-      sex: "female",
-      age: 21,
-      service: "Consulta",
-      image: "https://imgs.search.brave.com/DYV3BxkQ8UMDNBQZ0FGyoj6mhA-PVkTQLImT7hBztMs/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzA3LzEzLzM4LzM5/LzM2MF9GXzcxMzM4/Mzk5NV9OTnZKZ2U1/emFpbVFsdzRXVW1n/U3ZHMVhMVUdzcTBI/ai5qcGc",
-      date: "20 Sept. 2022",
-      hour: "08:00 AM",
-      status : "Cancelado",
-      clinic: 3,
-    },
-  ];
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const doctorId = auth.currentUser.uid;
+
+        // Traer solo citas pendientes o confirmadas de este doctor
+        const citasSnapshot = await getDocs(
+          query(
+            collection(db, "citas"),
+            where("estado", "in", ["pendiente", "confirmada", "cancelada"]),
+            where("doctorId", "==", doctorId)
+          )
+        );
+
+        const doctorSnapshot = await getDocs(
+          query(
+            collection(db, "users"),
+            where("__name__", "==", doctorId)  // traemos los datos del doctor
+          )
+        );
+        const doctorDoc = doctorSnapshot.docs[0]?.data();
+
+        const patientsList = await Promise.all(
+          citasSnapshot.docs.map(async (docCita) => {
+            const cita = docCita.data();
+
+            // Traer datos del paciente
+            const patientSnapshot = await getDocs(
+              query(
+                collection(db, "users"),
+                where("__name__", "==", cita.pacienteId)
+              )
+            );
+
+            const patientDoc = patientSnapshot.docs[0]?.data();
+            // Tomar los nombres de todos los servicios como string
+            const serviciosNombres = Array.isArray(cita.servicios)
+            ? cita.servicios.map(s => s.nombre).join(', ')
+            : cita.servicios?.nombre || 'Consulta';
+
+            return {
+              id: docCita.id,
+              name:
+                patientDoc?.nombre +
+                " " +
+                patientDoc?.apellidoPaterno +
+                " " +
+                patientDoc?.apellidoMaterno,
+              age: patientDoc?.edad,
+              fechaNacimiento: patientDoc?.fechaNacimiento,
+              image: patientDoc?.photoURL,
+              date: cita.fecha,
+              hour: cita.hora,
+              service: serviciosNombres,
+              status: cita.estado,
+
+              doctorId: doctorId,                        
+              doctorNombre: doctorDoc?.nombre + " " + doctorDoc?.apellidoPaterno + " " + doctorDoc?.apellidoMaterno,     
+              clinic: doctorDoc?.consultorio || '',
+            };
+          })
+        );
+
+        setPatients(patientsList);
+
+      } catch (error) {
+        console.error("Error al cargar pacientes:", error);
+      }
+    };
+
+    fetchPatients();
+  }, []);
 
   const renderArchivades = (item) => 
   (
@@ -57,12 +96,13 @@ const Appointments = () => {
       <View style={styles.doctorInfo}>
         <Image source={{ uri: item.image }} style={styles.archiveImage} />
         <View style={styles.archiveInfo}>
-          <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
+          <Text style={styles.doctorName} numberOfLines={5} ellipsizeMode="tail">
               {item.name}
           </Text>
-          <Text style={styles.doctorService}>{item.service}</Text>
+          <Text style={styles.doctorService}>
+            {item.service}
+          </Text>
         </View>
-  
       </View>
   
       {/* boton */}
@@ -73,17 +113,24 @@ const Appointments = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.dateInfo}>
-          <TouchableOpacity style={styles.notesButton}
+          <TouchableOpacity
+            style={styles.notesButton}
             onPress={() =>
             navigation.navigate("CreateNotes", {
               patient: {
-                date: item.date,
+                id: item.id,
                 name: item.name,
-                age: item.age,
-                clinic: item.clinic
+                date: item.date,
+                age: item.age ?? null,
+              },
+              doctor: {
+                id: item.doctorId,
+                nombre: item.doctorNombre ?? '',
+                clinic: item.clinic ?? '',
               }
             })
-          }>
+          }
+          >
             <Text style={styles.notesText}>+ Notas</Text>
           </TouchableOpacity>
         </View>
@@ -94,7 +141,11 @@ const Appointments = () => {
   return(
         <View style={styles.container}>
           <ScrollView contentContainerStyle={styles.scroll}>
-            {archivades.map(renderArchivades)}
+              {patients.length > 0 ? (
+                patients.map(renderArchivades)
+              ) : (
+                <Text style={styles.noAppointmentsText}>No tienes pacientes con citas hoy</Text>
+              )}
           </ScrollView>
         </View>
   );
@@ -102,39 +153,64 @@ const Appointments = () => {
 
 const History = () => {
   const navigation = useNavigation();
+  const [patients, setPatients] = useState([]);
 
-    const archivades = [
-    {
-      id: 1,
-      name: "Daniel flores Zazueta",
-      sex: "male",
-      service: "Rayos X",
-      image: "https://imgs.search.brave.com/PyiinRrY5IiCJP7f0qr4dC0_-gnIw5e2twwoXwRgGzI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/Zm90by1ncmF0aXMv/aG9tYnJlLWZlbGl6/LXBpZS1wbGF5YV8x/MDc0MjAtOTg2My5q/cGc_c2VtdD1haXNf/aHlicmlkJnc9NzQw/JnE9ODA",
-      date: "13 Sept. 2022",
-      hour: "10:00 AM",
-      status : "Confirmado"
-    },
-    {
-      id: 2,
-      name: "David Montoya Lopez",
-      sex: "male",
-      service: "Consulta",
-      image: "https://imgs.search.brave.com/GfUo1G7t01wG8lxoeHybzFdEqI9i4TtrddTz64ZjqwE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTM4/ODY0ODYxNy9lcy9m/b3RvL2pvdmVuLWNh/dWMlQzMlQTFzaWNv/LWNvbmZpYWRvLWNv/bi1yb3BhLWNhc3Vh/bC1kZS1tZXpjbGls/bGEtY29uLWxvcy1i/cmF6b3MtY3J1emFk/b3MtbWlyYW5kby1h/LWxhLmpwZz9zPTYx/Mng2MTImdz0wJms9/MjAmYz1UWE9WckJi/S3VPQ3dqUVR0NGtP/VTdJUGIwTTdxeXhz/bVVPMi1vVjlEVm13/PQ",
-      date: "15 Sept. 2022",
-      hour: "03:30 PM",
-      status : "Pendiente"
-    },
-    {
-      id: 3,
-      name: "Maria Jose Perez Luna",
-      sex: "female",
-      service: "Consulta",
-      image: "https://imgs.search.brave.com/DYV3BxkQ8UMDNBQZ0FGyoj6mhA-PVkTQLImT7hBztMs/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzA3LzEzLzM4LzM5/LzM2MF9GXzcxMzM4/Mzk5NV9OTnZKZ2U1/emFpbVFsdzRXVW1n/U3ZHMVhMVUdzcTBI/ai5qcGc",
-      date: "20 Sept. 2022",
-      hour: "08:00 AM",
-      status : "Cancelado"
-    },
-  ];
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const doctorId = auth.currentUser.uid;
+
+        // Traer solo citas pendientes o confirmadas de este doctor
+        const citasSnapshot = await getDocs(
+          query(
+            collection(db, "citas"),
+            where("estado", "in", ["pendiente", "confirmada"]),
+            where("doctorId", "==", doctorId)
+          )
+        );
+
+        const patientsList = await Promise.all(
+          citasSnapshot.docs.map(async (docCita) => {
+            const cita = docCita.data();
+
+            // Traer datos del paciente
+            const patientSnapshot = await getDocs(
+              query(
+                collection(db, "users"),
+                where("__name__", "==", cita.pacienteId)
+              )
+            );
+
+            const patientDoc = patientSnapshot.docs[0]?.data();
+            // Tomar los nombres de todos los servicios como string
+            const serviciosNombres = Array.isArray(cita.servicios)
+            ? cita.servicios.map(s => s.nombre).join(', ')
+            : cita.servicios?.nombre || 'Consulta';
+
+            return {
+              id: docCita.id,
+              pacienteId: cita.pacienteId,
+              name: patientDoc?.nombre + " " + patientDoc?.apellidoPaterno + " " + patientDoc?.apellidoMaterno,
+              sex: patientDoc?.sexo,
+              image: patientDoc?.photoURL,
+              date: cita.fecha,
+              hour: cita.hora,
+              service: serviciosNombres,
+              status: cita.estado,
+              clinic: cita.clinic || '',
+            };
+          })
+        );
+
+        setPatients(patientsList);
+
+      } catch (error) {
+        console.error("Error al cargar pacientes:", error);
+      }
+    };
+
+    fetchPatients();
+  }, []);
 
     const renderArchivades = (item) => 
   (
@@ -143,7 +219,7 @@ const History = () => {
       <View style={styles.doctorInfo}>
         <Image source={{ uri: item.image }} style={styles.archiveImage} />
         <View style={styles.archiveInfo}>
-          <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
+          <Text style={styles.doctorName} numberOfLines={5} ellipsizeMode="tail">
               {item.name}
           </Text>
           <Text style={styles.doctorService}>{item.service}</Text>
@@ -172,11 +248,15 @@ const History = () => {
   );
 
   return(
-        <View style={styles.container}>
-          <ScrollView contentContainerStyle={styles.scroll}>
-            {archivades.map(renderArchivades)}
-            </ScrollView>
-        </View>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        {patients.length > 0 ? (
+            patients.map(renderArchivades)
+          ) : (
+            <Text style={styles.noAppointmentsText}>No tienes pacientes con citas hoy</Text>
+          )}
+        </ScrollView>
+    </View>
   );
 };
 
@@ -340,4 +420,10 @@ const styles = StyleSheet.create({
       justifyContent: 'space-between',
       gap: 10,
     },
+    noAppointmentsText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+  }
 });
