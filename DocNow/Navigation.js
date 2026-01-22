@@ -71,6 +71,7 @@ function PatientStack({onLogout}) {
         {(props) => <HomePatient {...props} onLogout={onLogout} />}
       </Stack.Screen>
       <Stack.Screen name="SeeDoctor" component={SeeDoctor} />
+      <Stack.Screen name="Ratings" component={Ratings} />
       <Stack.Screen name="RegisterAppointment" component={RegisterAppointment} />
       <Stack.Screen name="Pay" component={Pay} />
       <Stack.Screen name="InfoPay" component={infoPay} />
@@ -129,6 +130,7 @@ function  HomeDoctorStack({onLogout}) {
       </Stack.Screen>
       <Stack.Screen name="SeeNotes" component={SeeNotes} />
       <Stack.Screen name="NotesPatient" component={NotesPatient} />
+      <Stack.Screen name="Settings" component={Settings} />
     </Stack.Navigator>
   );
 }
@@ -140,6 +142,16 @@ function AppointmentsStack() {
       <Stack.Screen name="CreateNotes" component={CreateNotes} />
       <Stack.Screen name="SeeNotes" component={SeeNotes} />
       <Stack.Screen name="NotesPatient" component={NotesPatient} />
+      <Stack.Screen name="Settings" component={Settings} />
+    </Stack.Navigator>
+  );
+}
+
+function NotificationDocStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="NotificationsDoc" component={NotificationsDoc} />
+      <Stack.Screen name="Settings" component={Settings} />
     </Stack.Navigator>
   );
 }
@@ -151,6 +163,7 @@ function ProfileDocStack({ onLogout }) {
         {(props) => <ProfileDoc {...props} onLogout={onLogout} />}
       </Stack.Screen>
       <Stack.Screen name="Ratings" component={Ratings} />
+      <Stack.Screen name="Settings" component={Settings} />
     </Stack.Navigator>
   );
 }
@@ -260,7 +273,7 @@ function DoctorTabs({ onLogout }) {
 
       <Tab.Screen
         name="Notificaciones"
-        component={NotificationsDoc}
+        component={NotificationDocStack}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="notifications" color={color} size={size} />

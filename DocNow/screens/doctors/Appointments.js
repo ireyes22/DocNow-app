@@ -4,10 +4,9 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView} from 'reac
 import { Ionicons } from '@expo/vector-icons';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useNavigation } from '@react-navigation/native';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebaseConfig';
 import { useEffect } from 'react';
-
 
 const PrimaryColor = '#0A3B74';
 const SecondaryColor = '#498FC0';
@@ -21,11 +20,11 @@ const Appointments = () => {
       try {
         const doctorId = auth.currentUser.uid;
 
-        // Traer solo citas pendientes o confirmadas de este doctor
+        // Traer solo citas confirmadas de este doctor
         const citasSnapshot = await getDocs(
           query(
             collection(db, "citas"),
-            where("estado", "in", ["pendiente", "confirmada", "cancelada"]),
+            where("estado", "in", ["confirmada"]),
             where("doctorId", "==", doctorId)
           )
         );
@@ -89,6 +88,25 @@ const Appointments = () => {
     fetchPatients();
   }, []);
 
+  const finalizarCita = async (citaId) => {
+    try {
+      const citaRef = doc(db, "citas", citaId);
+      await updateDoc(citaRef, {
+        estado: "finalizada"
+      });
+      alert("Cita finalizada correctamente");
+
+      // Actualizar lista local sin recargar toda la página
+      setPatients(prev =>
+        prev.map(p => p.id === citaId ? { ...p, status: "finalizada" } : p)
+      );
+
+    } catch (error) {
+      console.error("Error al finalizar la cita:", error);
+      alert("No se pudo finalizar la cita");
+    }
+  };
+
   const renderArchivades = (item) => 
   (
     <View key={item.id} style={styles.archiveCard}>
@@ -108,7 +126,7 @@ const Appointments = () => {
       {/* boton */}
       <View style={styles.groupButtons}>
         <View style={styles.dateInfo}>
-          <TouchableOpacity style={styles.evaluateButton}>
+          <TouchableOpacity style={styles.evaluateButton} onPress={() => finalizarCita(item.id)}>
             <Text style={styles.evaluateText}>Finalizar</Text>
           </TouchableOpacity>
         </View>
@@ -142,7 +160,7 @@ const Appointments = () => {
         <View style={styles.container}>
           <ScrollView contentContainerStyle={styles.scroll}>
               {patients.length > 0 ? (
-                patients.map(renderArchivades)
+                patients.filter(p => p.status !== "finalizada").map(renderArchivades)
               ) : (
                 <Text style={styles.noAppointmentsText}>No tienes pacientes con citas hoy</Text>
               )}
@@ -164,7 +182,7 @@ const History = () => {
         const citasSnapshot = await getDocs(
           query(
             collection(db, "citas"),
-            where("estado", "in", ["pendiente", "confirmada"]),
+            where("estado", "in", ["pendiente", "confirmada", "finalizada"]),
             where("doctorId", "==", doctorId)
           )
         );
