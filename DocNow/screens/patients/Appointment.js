@@ -6,7 +6,7 @@ import { Calendar, LocaleConfig } from 'react-native-calendars';
 import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where,  getDoc, doc } from 'firebase/firestore';
 import { db, auth } from '../../firebaseConfig';
 import { useEffect } from 'react';
 
@@ -154,61 +154,80 @@ const MyAppointments = () => {
 // pantalla de citas archivadas
 const ArchivedAppointments = () => {
   const navigation = useNavigation();
+  const [archivedAppointments, setArchivedAppointments] = useState([]);
 
-  const archivades = [
-    {
-      id: 1,
-      sex: "male",
-      doctor: "Juan Perez",
-      image: "https://www.clinicasantiago.com.ec/wp-content/uploads/2024/12/dr_victor_herna.jpg",
-      service: "Rayos X",
-    },
-    {
-      id: 2,
-      sex: "female",
-      doctor: "Maria Lopez",
-      image: "https://cdn.agenciasinc.es/var/ezwebin_site/storage/images/_aliases/img_1col/noticias/solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales/3405721-5-esl-MX/Solo-el-8-de-las-medicas-alcanza-puestos-de-responsabilidad-en-hospitales.jpg",
-      service: "Consulta",
-    },
-    {
-      id: 3,
-      sex: "female",
-      doctor: "Araceli Young",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQPd1ag04qAxUqyFsA1waifXN9eNnce45gdKQ&s",
-      service: "Consulta",
-    },
-    {
-      id: 4,
-      sex: "female",
-      doctor: "María Gonzalez",
-      image: "https://www.shutterstock.com/image-photo/smiling-young-african-american-curly-600nw-2319779015.jpg",
-      service: "Consulta",
-    },
-    {
-      id: 5,
-      sex: "male",
-      doctor: "Ernesto Guluarte",
-      image: "https://www.shutterstock.com/image-photo/portrait-handsome-male-doctor-stethoscope-600nw-2480850611.jpg",
-      service: "Rayos X",
-    },
-    {
-      id: 6,
-      sex: "female",
-      doctor: "Vanessa López",
-      image: "https://media.istockphoto.com/id/171296819/es/foto/afroamericana-mujer-m%C3%A9dico-sostiene-un-portapapeles-aislado.jpg?s=612x612&w=0&k=20&c=cy6HdlYoFA_aqpMBV6Yo5Tj01piaQXD4OmBPi2Xj7Xc=",
-      service: "Consulta",
-    },
-  ];
+useEffect(() => {
+  const fetchArchived = async () => {
+    try {
+      const patientId = auth.currentUser.uid;
+
+      const q = query(
+        collection(db, 'citas'),
+        where('pacienteId', '==', patientId),
+        where('estado', '==', 'finalizada')
+      );
+
+      const snapshot = await getDocs(q);
+
+      const appointments = await Promise.all(
+        snapshot.docs.map(async docCita => {
+        const cita = docCita.data();
+
+        const doctorSnap = await getDoc(
+          doc(db, 'users', cita.doctorId)
+        );
+
+        const opinionSnapshot = await getDocs(
+          query(
+            collection(db, 'opiniones'),
+            where('citaId', '==', docCita.id),
+            where('pacienteId', '==', patientId)
+          )
+        );
+
+        const yaEvaluada = !opinionSnapshot.empty;
+
+        console.log('CITA:', docCita.id, 'YA EVALUADA:', yaEvaluada);
+
+        const doctor = doctorSnap.exists()
+          ? doctorSnap.data()
+          : null;
+
+          return {
+            id: docCita.id,
+            doctorId: cita.doctorId,
+            doctorName: doctor
+              ? `${doctor.nombre} ${doctor.apellidoPaterno}`
+              : 'Doctor',
+            doctorSex: doctor?.sexo || 'Masculino',
+            doctorImage:
+              doctor?.photoURL || 'https://via.placeholder.com/150',
+            service: Array.isArray(cita.servicios)
+              ? cita.servicios.map(s => s.nombre).join(', ')
+              : cita.servicios?.nombre || 'Consulta',
+             yaEvaluada,
+          };
+        })
+      );
+
+      setArchivedAppointments(appointments);
+    } catch (error) {
+      console.error('Error al cargar citas archivadas:', error);
+    }
+  };
+
+  fetchArchived();
+}, []);
 
   const renderArchivades = (item) => (
     <View key={item.id} style={styles.archiveCard}>
 
       {/* info doctor */}
       <View style={styles.doctorInfo}>
-        <Image source={{ uri: item.image }} style={styles.archiveImage} />
+        <Image source={{ uri: item.doctorImage }} style={styles.archiveImage} />
         <View style={styles.archiveInfo}>
           <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
-            Dr{item.sex === "female" ? "a" : ""}. {item.doctor} 
+            Dr{item.doctorSex === "Femenino" ? "a" : ""}. {item.doctorName} 
           </Text>
           <Text style={styles.serviceText}>{item.service}</Text>
         </View>
@@ -216,29 +235,40 @@ const ArchivedAppointments = () => {
       </View>
 
       {/* boton */}
-      <View style={styles.dateInfo}>
-        <TouchableOpacity style={styles.evaluateButton} 
-         onPress={() =>
-          navigation.navigate("Rating", {
-            doctor: {
-              name: item.doctor,
-              image: item.image,
-              sex: item.sex,
-              service: item.service,
+      {!item.yaEvaluada && (
+        <View style={styles.dateInfo}>
+          <TouchableOpacity
+            style={styles.evaluateButton}
+            onPress={() =>
+              navigation.navigate("Rating", {
+                doctor: {
+                  id: item.doctorId,
+                  name: item.doctorName,
+                  image: item.doctorImage,
+                  sex: item.doctorSex,
+                  service: item.service,
+                },
+                citaId: item.id,
+              })
             }
-          })} 
-        >
-          <Text style={styles.evaluateText}>Evaluar</Text>
-        </TouchableOpacity>
-      </View>
+          >
+            <Text style={styles.evaluateText}>Evaluar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }}
+      style={{ backgroundColor: '#fff' }}>
       <View style={styles.container}>
           
-        {archivades.map(renderArchivades)}
+        {archivedAppointments.length > 0 ? (
+          archivedAppointments.map(renderArchivades)
+        ) : (
+          <Text style={styles.noAppointmentsText}>No tienes citas finalizadas</Text>
+        )}
 
         <StatusBar style="auto" />
       </View>

@@ -6,6 +6,8 @@ import { ScrollView } from 'react-native';
 import { useNavigation, useRoute  } from '@react-navigation/native';
 import Settings from '../Settings';
 import StarRating from 'react-native-star-rating-widget';
+import { collection, addDoc, doc, getDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../../firebaseConfig';
 
 const PrimaryColor = '#0A3B74';
 const SecondaryColor = '#498FC0';
@@ -14,9 +16,51 @@ const Rating = () => {
   const route = useRoute();
   const navigation = useNavigation();
 
-  const { doctor } = route.params;
+  const { doctor, citaId } = route.params;
 
   const [rating, setRating] = useState(0);
+  const [comentario, setComentario] = useState('');
+
+  const enviarOpinion = async () => {
+  if (rating === 0) {
+    alert('Por favor califica al doctor');
+    return;
+  }
+
+  try {
+    const pacienteId = auth.currentUser.uid;
+
+    // 🔹 Traer datos del paciente desde users
+    const pacienteRef = doc(db, 'users', pacienteId);
+    const pacienteSnap = await getDoc(pacienteRef);
+
+    if (!pacienteSnap.exists()) {
+      alert('No se encontraron datos del paciente');
+      return;
+    }
+
+    const paciente = pacienteSnap.data();
+
+    // 🔹 Guardar opinión
+    await addDoc(collection(db, 'opiniones'), {
+      citaId: citaId,
+      doctorId: doctor.id,
+      pacienteId: pacienteId,
+      pacienteNombre: `${paciente.nombre} ${paciente.apellidoPaterno}`,
+      pacienteFoto: paciente.photoURL || null,
+      rating: rating,
+      comentario: comentario.trim(),
+      fecha: serverTimestamp(),
+    });
+
+    alert('Gracias por tu opinión');
+    navigation.goBack();
+
+  } catch (error) {
+    console.error('Error al guardar opinión:', error);
+    alert('No se pudo guardar la opinión');
+  }
+};
 
   return (
       <View style={styles.container}>
@@ -67,14 +111,14 @@ const Rating = () => {
 
         <TextInput
           style={styles.input}
-          // value={curp}
-          // onChangeText={setCurp}
+          value={comentario}
+          onChangeText={setComentario}
           placeholder='Añadir comentario...'
           multiline={true}  
           scrollEnabled={true}  
         />
 
-        <TouchableOpacity style={styles.sendButton} onPress={() => setEditMode(true)}>
+        <TouchableOpacity style={styles.sendButton} onPress={enviarOpinion}>
           <Text style={styles.sendButtonText}>Enviar</Text>
         </TouchableOpacity>
 

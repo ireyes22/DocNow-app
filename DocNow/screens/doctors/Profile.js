@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'reac
 import { ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation} from '@react-navigation/native';
+import StarRating from 'react-native-star-rating-widget';
 import { auth, db } from '../../firebaseConfig';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -23,6 +24,7 @@ const Profile = ({ onLogout }) => {
         { nombre: "", precio: "" },
         { nombre: "", precio: "" },
     ]);
+    const [ratings, setRatings] = useState([]);
 
     // guardar los datos editados del doctor
     const saveDoctorData = async () => {
@@ -43,31 +45,6 @@ const Profile = ({ onLogout }) => {
         }
     };
 
-    const ratings = [
-        {
-            id: 1,
-            image: "https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg?semt=ais_hybrid&w=740&q=80",
-            rating: 4,
-            date: "13 Sept. 2022",
-            opinion: "El mejor médico, me encanta su amabilidad",
-        },
-        {
-            id: 2,
-            image: "https://media.istockphoto.com/id/1053768920/es/foto/seria-bella-mujer-negro.jpg?s=612x612&w=0&k=20&c=8Q0sZYVER0FBkVhg3zKVN6KpzwnEnV5VBRiuhbmFxFw=",
-            rating: 1,
-            date: "25 Abr. 2022",
-            opinion: "Pésimo servicio",
-        },
-        {
-            id: 3,
-            image: "https://www.hola.com/horizon/landscape/6a53cd5134b2-getty-chica-feliz-t.jpg",
-            rating: 5,
-            date: "27 Mar. 2022",
-            opinion: "Buen servicio",
-        
-        }
-    ];
-
     // cargar datos del doctor de firebase
     useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -87,6 +64,33 @@ const Profile = ({ onLogout }) => {
             setSelectedDays(data.diasDisponibles || "Lunes a viernes");
             setSelectedSchedule(data.horarioDisponible || "Matutino");
         }
+
+        // Cargar las primeras 3 valoraciones
+    try {
+      const ratingsQuery = query(
+        collection(db, 'opiniones'),
+        where('doctorId', '==', user.uid),
+        limit(3) // solo las primeras 3
+      );
+
+      const snapshot = await getDocs(ratingsQuery);
+      const ratingsData = snapshot.docs.map(doc => {
+        const r = doc.data();
+        return {
+          id: doc.id,
+          rating: r.rating,
+          opinion: r.comentario,
+          image: r.pacienteFoto,
+          date: r.fecha?.toDate().toLocaleDateString('es-MX'),
+        };
+      });
+
+      setRatings(ratingsData);
+
+    } catch (error) {
+      console.error("Error al cargar valoraciones:", error);
+    }
+
     });
 
     return () => unsubscribe();
@@ -99,43 +103,6 @@ const Profile = ({ onLogout }) => {
             </View>
         );
     }
-
-   //render opinion
-       const renderStars = (rating) => {
-       return [...Array(5)].map((_, index) => (
-           <Ionicons
-           key={index}
-           name="star"
-           size={16}
-           color={index < rating ? "#FFD700" : "#D9D9D9"}
-           style={{ marginRight: 2 }}
-           />
-       ));
-       };
-   
-       const renderRating = (item) => (
-       <View key={item.id} style={styles.ratingCard}>
-           
-           {/* avatar */}
-           <Image source={{ uri: item.image }} style={styles.ratingImage} />
-   
-           {/* content */}
-           <View style={styles.ratingContent}>
-   
-           <View style={styles.ratingHeader}>
-               <View style={styles.starsRow}>
-               {renderStars(item.rating)}
-               </View>
-   
-               {item.date && (
-               <Text style={styles.ratingDate}>{item.date}</Text>
-               )}
-           </View>
-   
-           <Text style={styles.ratingText}>{item.opinion}</Text>
-           </View>
-       </View>
-       );
 
     return(
         <ScrollView contentContainerStyle={styles.scroll}>
@@ -362,14 +329,28 @@ const Profile = ({ onLogout }) => {
             
                         <TouchableOpacity style={styles.servicesRow}
                             onPress={() =>
-                                navigation.navigate("Ratings", { ratings })
+                            navigation.navigate("Ratings", {
+                                doctorId: doctorId,
+                            })
                             }
                         >
                             <Text style={styles.textServices}>Valoraciones</Text>
                             <Ionicons name="arrow-forward-outline" size={24} color={PrimaryColor} />
                         </TouchableOpacity>
-            
-                        {ratings.map(renderRating)}
+
+                        {ratings.map(r => (
+      <View key={r.id} style={styles.ratingCard}>
+        <Image source={{ uri: r.image }} style={styles.ratingImage} />
+        <View style={styles.ratingContent}>
+          <View style={styles.ratingHeader}>
+            <StarRating rating={r.rating} onChange={() => {}} starSize={16} enableSwiping={false} starStyle={{ marginRight: 2 }} />
+            {r.date && <Text style={styles.ratingDate}>{r.date}</Text>}
+          </View>
+          <Text style={styles.ratingText}>{r.opinion}</Text>
+        </View>
+      </View>
+    ))}
+
             
                     </View>
                 )}

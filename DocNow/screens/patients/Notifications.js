@@ -92,7 +92,7 @@ const Notifications = () => {
       <View style={styles.doctorInfo}>
         <Image source={{ uri: item.doctorFoto}} style={styles.appointmentImage} />
         <Text style={styles.doctorName} numberOfLines={2} ellipsizeMode="tail">
-          {item.doctorSexo === "Femenino" ? "Dra." : "Dr."} {item.doctorNombre}{item.doctorApellido}
+          {item.doctorSexo === "Femenino" ? "Dra." : "Dr."} {item.doctorNombre} {item.doctorApellido}
         </Text>
       </View>
 

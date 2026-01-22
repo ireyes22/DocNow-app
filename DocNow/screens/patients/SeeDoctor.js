@@ -2,77 +2,51 @@ import React from "react";
 import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from "@react-navigation/native";
+import StarRating from 'react-native-star-rating-widget';
 import RegisterAppointment from "./RegisterAppointment";
+import { collection, getDocs, query, where, limit } from 'firebase/firestore';
+import {  auth,db } from '../../firebaseConfig';
 
 const PrimaryColor = '#0A3B74';
 
 const SeeDoctor = () => {
     const route = useRoute();
     const navigation = useNavigation();
+    const [ratings, setRatings] = React.useState([]);
 
     const { doctor } = route.params;
 
-    const ratings = [
-    {
-        id: 1,
-        image: "https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg?semt=ais_hybrid&w=740&q=80",
-        rating: 4,
-        date: "13 Sept. 2022",
-        opinion: "El mejor médico, me encanta su amabilidad",
-    },
-    {
-        id: 2,
-        image: "https://media.istockphoto.com/id/1053768920/es/foto/seria-bella-mujer-negro.jpg?s=612x612&w=0&k=20&c=8Q0sZYVER0FBkVhg3zKVN6KpzwnEnV5VBRiuhbmFxFw=",
-        rating: 1,
-        date: "25 Abr. 2022",
-        opinion: "Pésimo servicio",
-    },
-    {
-        id: 3,
-        image: "https://www.hola.com/horizon/landscape/6a53cd5134b2-getty-chica-feliz-t.jpg",
-        rating: 5,
-        date: "27 Mar. 2022",
-        opinion: "Buen servicio",
-      
+    React.useEffect(() => {
+  const fetchRatings = async () => {
+    try {
+      const q = query(
+        collection(db, 'opiniones'),
+        where('doctorId', '==', doctor.id),
+        limit(3) // solo los primeros 3 comentarios
+      );
+
+      const snapshot = await getDocs(q);
+
+      const ratingsData = snapshot.docs.map(doc => {
+        const r = doc.data();
+        return {
+          id: doc.id,
+          rating: r.rating,
+          opinion: r.comentario,
+          image: r.pacienteFoto,
+          date: r.fecha?.toDate().toLocaleDateString('es-MX'),
+        };
+      });
+
+      setRatings(ratingsData);
+
+    } catch (error) {
+      console.error("Error al cargar valoraciones:", error);
     }
-  ];
+  };
 
-    //función para renderizar las opiniones
-    const renderStars = (rating) => {
-    return [...Array(5)].map((_, index) => (
-        <Ionicons
-        key={index}
-        name="star"
-        size={16}
-        color={index < rating ? "#FFD700" : "#D9D9D9"}
-        style={{ marginRight: 2 }}
-        />
-    ));
-    };
-
-    const renderRating = (item) => (
-    <View key={item.id} style={styles.ratingCard}>
-        
-        {/* avatar */}
-        <Image source={{ uri: item.image }} style={styles.ratingImage} />
-
-        {/* content */}
-        <View style={styles.ratingContent}>
-
-        <View style={styles.ratingHeader}>
-            <View style={styles.starsRow}>
-            {renderStars(item.rating)}
-            </View>
-
-            {item.date && (
-            <Text style={styles.ratingDate}>{item.date}</Text>
-            )}
-        </View>
-
-        <Text style={styles.ratingText}>{item.opinion}</Text>
-        </View>
-    </View>
-    );
+  fetchRatings();
+}, [doctor]);
 
 
   return (
@@ -169,12 +143,41 @@ const SeeDoctor = () => {
         {/* ratings*/}
         <View style={styles.contactContainer}>
 
-            <TouchableOpacity style={styles.servicesRow}>
+            <TouchableOpacity style={styles.servicesRow} 
+            onPress={() =>
+              navigation.navigate("Ratings", {
+                doctorId: doctor.id,
+              })
+            }
+            >
                 <Text style={styles.textServices}>Valoraciones</Text>
                 <Ionicons name="arrow-forward-outline" size={24} color={PrimaryColor} />
             </TouchableOpacity>
 
-            {ratings.map(renderRating)}
+            {ratings.length === 0 ? (
+              <Text style={{ textAlign: 'center', color: '#777', marginTop: 10 }}>
+                Este médico aún no tiene valoraciones
+              </Text>
+            ) : (
+              ratings.map(r => (
+                <View key={r.id} style={styles.ratingCard}>
+                  <Image source={{ uri: r.image }} style={styles.ratingImage} />
+                  <View style={styles.ratingContent}>
+                    <View style={styles.ratingHeader}>
+                      <StarRating
+                        rating={r.rating}
+                        onChange={() => {}}
+                        starSize={16}
+                        enableSwiping={false}
+                        starStyle={{ marginRight: 2 }}
+                      />
+                      {r.date && <Text style={styles.ratingDate}>{r.date}</Text>}
+                    </View>
+                    <Text style={styles.ratingText}>{r.opinion}</Text>
+                  </View>
+                </View>
+              ))
+            )}
 
         </View>
 
