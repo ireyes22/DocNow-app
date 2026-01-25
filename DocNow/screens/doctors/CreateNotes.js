@@ -28,8 +28,24 @@ const CreateNotes = () => {
   }
 
   try {
+
+     // 🔎 1. Verificar si ya existe una nota para esta cita
+    const q = query(
+      collection(db, 'notas'),
+      where('citaId', '==', patient.citaId)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      alert('Esta cita ya tiene una nota registrada');
+      return; // ⛔ NO guarda otra
+    }
+    
     await addDoc(collection(db, 'notas'), {
-      pacienteId: patient.id,
+      citaId: patient.citaId,     
+
+      pacienteId: patient.id, 
       pacienteNombre: patient.name,
       edad: patient.age ?? null,
       fechaCita: patient.date,
@@ -56,6 +72,8 @@ const CreateNotes = () => {
   }
 };
 
+// console.log("PACIENTE ID:", patient.id);
+// console.log("CITA ID:", patient.citaId);
 
     return(
         <ScrollView contentContainerStyle={styles.scroll}>

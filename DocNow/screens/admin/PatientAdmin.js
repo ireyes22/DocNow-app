@@ -13,6 +13,12 @@ const PatientAdmin = () => {
     const navigation = useNavigation();
     const [search, setSearch] = useState('');
     const [patients, setPatients] = useState([]);
+    const searchRegex = new RegExp(search.trim(), 'i');
+    const filteredPatients = patients.filter(patient =>
+    searchRegex.test(
+      `${patient.nombre} ${patient.apellidoPaterno} ${patient.apellidoMaterno}`
+    )
+  );
 
     // cargar a todos los pacientes
     useEffect(() => {
@@ -103,7 +109,7 @@ const PatientAdmin = () => {
                 />
             </View>
 
-            {patients.map(renderArchivades)}
+            {filteredPatients.map(renderArchivades)}
 
             </ScrollView>
         </View>

@@ -13,7 +13,7 @@ const PrimaryColor = '#0A3B74';
 
 const Pay = ({ route }) => {
   const navigation = useNavigation();
-  const { doctorId, pacienteId, fecha, hora, servicios, total } = route.params;
+  const { doctorId, fecha, hora, servicios, total } = route.params;
 
   return (
       <View style={styles.container}>

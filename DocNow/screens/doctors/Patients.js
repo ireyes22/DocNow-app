@@ -84,6 +84,8 @@ const Patients = ({onLogout}) => {
           onPress={() =>
           navigation.navigate("SeeNotes", {
             patient: {
+              citaId: item.id,
+              id: item.pacienteId,
               name: item.name,
               date: item.date,
               service: item.service,
@@ -122,7 +124,7 @@ const Patients = ({onLogout}) => {
           patients.map(renderArchivades)
         ) : (
           <Text style={styles.noAppointmentsText}>
-            No tienes pacientes con citas hoy
+            No tienes citas próximas con pacientes.
           </Text>
         )}
 

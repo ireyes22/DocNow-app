@@ -330,7 +330,7 @@ const Profile = ({ onLogout }) => {
                         <TouchableOpacity style={styles.servicesRow}
                             onPress={() =>
                             navigation.navigate("Ratings", {
-                                doctorId: doctorId,
+                                doctorId: auth.currentUser.uid,
                             })
                             }
                         >
@@ -339,19 +339,17 @@ const Profile = ({ onLogout }) => {
                         </TouchableOpacity>
 
                         {ratings.map(r => (
-      <View key={r.id} style={styles.ratingCard}>
-        <Image source={{ uri: r.image }} style={styles.ratingImage} />
-        <View style={styles.ratingContent}>
-          <View style={styles.ratingHeader}>
-            <StarRating rating={r.rating} onChange={() => {}} starSize={16} enableSwiping={false} starStyle={{ marginRight: 2 }} />
-            {r.date && <Text style={styles.ratingDate}>{r.date}</Text>}
-          </View>
-          <Text style={styles.ratingText}>{r.opinion}</Text>
-        </View>
-      </View>
-    ))}
-
-            
+                        <View key={r.id} style={styles.ratingCard}>
+                            <Image source={{ uri: r.image }} style={styles.ratingImage} />
+                            <View style={styles.ratingContent}>
+                            <View style={styles.ratingHeader}>
+                                <StarRating rating={r.rating} onChange={() => {}} starSize={16} enableSwiping={false} starStyle={{ marginRight: 2 }} />
+                                {r.date && <Text style={styles.ratingDate}>{r.date}</Text>}
+                            </View>
+                            <Text style={styles.ratingText}>{r.opinion}</Text>
+                            </View>
+                        </View>
+                        ))}
                     </View>
                 )}
 
