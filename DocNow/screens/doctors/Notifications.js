@@ -22,6 +22,7 @@ const Notifications = () => {
       const citasSnapshot = await getDocs(
         query(
           collection(db, 'citas'),
+          // where("estado", "in", ["pendiente", "confirmada", "cancelada", "finalizada"]),
           where('doctorId', '==', doctorId)
         )
       );

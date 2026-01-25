@@ -13,6 +13,12 @@ const DoctorAdmin = () => {
   const navigation = useNavigation();
   const [search, setSearch] = useState('');
   const [doctors, setDoctors] = useState([]);
+  const searchRegex = new RegExp(search.trim(), 'i');
+  const filteredDoctors = doctors.filter(doctor =>
+    searchRegex.test(
+      `${doctor.nombre} ${doctor.apellidoPaterno} ${doctor.apellidoMaterno}`
+    )
+  );
     
   // cargar a todos los doctores
   useEffect(() => {
@@ -103,7 +109,7 @@ const DoctorAdmin = () => {
                 />
             </View>
 
-            {doctors.map(renderArchivades)}
+            {filteredDoctors.map(renderArchivades)}
 
             </ScrollView>
         </View>

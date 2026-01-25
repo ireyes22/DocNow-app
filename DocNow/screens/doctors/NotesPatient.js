@@ -12,37 +12,65 @@ const PrimaryColor = '#0A3B74';
 const NotesPatient = () => {
     const navigation = useNavigation();
     const route = useRoute();
-    const { patient, doctor } = route.params;
+    const { patient, doctor, citaId } = route.params;
     const [nota, setNota] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { pacienteId } = route.params || {};
 
+    // console.log("PATIENT:", patient);
+    // console.log("CITAS ID:", citaId);
     useEffect(() => {
-    const fetchNota = async () => {
+  if (!citaId) {
+    console.warn("No se recibió citaId");
+    setLoading(false);
+    return;
+  }
+
+  const fetchNota = async () => {
         try {
         const q = query(
             collection(db, 'notas'),
-            where('pacienteId', '==', route.params.pacienteId)
+            where('citaId', '==', citaId)
         );
 
         const snapshot = await getDocs(q);
 
         if (!snapshot.empty) {
             setNota(snapshot.docs[0].data());
+        } else {
+            setNota(null);
         }
         } catch (error) {
-        console.error('Error al cargar nota:', error);
+            console.error('Error al cargar nota:', error);
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
-    };
+     };
 
-    fetchNota();
-    }, []);
+        fetchNota();
+    }, [citaId]);
+
 
     if (loading) {
     return (
         <View style={styles.container}>
-        <Text>Cargando nota...</Text>
+            {/*header*/}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Ionicons name="arrow-back-outline" size={24} color="black" />
+                </TouchableOpacity>
+        
+                <Image 
+                    source={require('../../assets/logoDocNow.png')} 
+                    style={{ width: 30, height: 30 }}
+                />
+        
+                <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
+                    <Ionicons name="settings-outline" size={24} color="black" />
+                </TouchableOpacity>
+            </View>
+
+            <Text style={styles.noAppointmentsText}>Cargando nota...</Text>
         </View>
     );
     }
@@ -50,13 +78,30 @@ const NotesPatient = () => {
     if (!nota) {
     return (
         <View style={styles.container}>
-        <Text>No hay notas registradas</Text>
+            {/*header*/}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Ionicons name="arrow-back-outline" size={24} color="black" />
+                </TouchableOpacity>
+        
+                <Image 
+                    source={require('../../assets/logoDocNow.png')} 
+                    style={{ width: 30, height: 30 }}
+                />
+        
+                <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
+                    <Ionicons name="settings-outline" size={24} color="black" />
+                </TouchableOpacity>
+            </View>
+
+            <Text style={styles.noAppointmentsText}>No hay notas registradas</Text>
         </View>
     );
     }
 
     return(
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}
+      style={{ backgroundColor: '#fff' }}>
         <View style={styles.container}>
             {/*header*/}
             <View style={styles.header}>
@@ -119,14 +164,6 @@ const NotesPatient = () => {
 
                 <Text style={styles.label}>Tratamiento</Text>
                 <Text style={styles.readText}>{nota.tratamiento}</Text>
-
-                <TouchableOpacity style={styles.sendButton}>
-                    <Text style={styles.sendButtonText}>Guardar nota</Text>
-                </TouchableOpacity>
-        
-                <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
-                    <Text style={styles.cancelButtonText}>Cancelar</Text>
-                </TouchableOpacity>
             </View>
 
         </View>
@@ -241,12 +278,14 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     readText: {
-        backgroundColor: '#F2F2F2',
         padding: 12,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#CBCBCB',
-    }
+    },
+    noAppointmentsText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+  }
 });
 
 export default NotesPatient;

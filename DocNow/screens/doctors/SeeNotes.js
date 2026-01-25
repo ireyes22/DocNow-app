@@ -1,8 +1,11 @@
-import React, { useState }  from 'react';
+import React, { useState, useEffect  }  from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import * as FileSystem from 'expo-file-system';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
 
 const PrimaryColor = '#0A3B74';
 
@@ -48,13 +51,20 @@ const SeeNotes = () => {
                 {/* boton */}
                 <View style={styles.groupButtons}>
                     <View style={styles.dateInfo}>
-                    <TouchableOpacity style={styles.evaluateButton} >
+                    <TouchableOpacity style={styles.evaluateButton} 
+                    onPress={() =>
+                        navigation.navigate("NotesPatient", {
+                            citaId: patient.citaId,
+                            patient: patient,
+                        })
+                    } 
+                    >
                         <Text style={styles.evaluateText}>Ver</Text>
                     </TouchableOpacity>
                     </View>
                 </View>
 
-            </View>
+            </View> 
             </ScrollView>
 
             <TouchableOpacity style={styles.sendButton}>
@@ -168,6 +178,12 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: "600",
     },
+    noAppointmentsText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+  }
 });
 
 export default SeeNotes;

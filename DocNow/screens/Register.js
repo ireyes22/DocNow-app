@@ -80,6 +80,7 @@ const Register = ({ onLogin }) => {
   const [lastNameP, setLastNameP] = useState('');
   const [lastNameM, setLastNameM] = useState('');
   const [curp, setCurp] = useState('');
+  const [age, setAge] = useState('');
   const [sex, setSex] = useState('');
   const [civilStatus, setCivilStatus] = useState('Soltero');
   const [email, setEmail] = useState('');
@@ -117,6 +118,7 @@ const Register = ({ onLogin }) => {
         apellidoPaterno: lastNameP,
         apellidoMaterno: lastNameM,
         curp: curp,
+        edad: Number(age),
         sexo: sex,
         fechaNacimiento: date,
         estadoCivil: civilStatus,
@@ -194,6 +196,15 @@ const Register = ({ onLogin }) => {
             style={styles.input}
               value={lastNameM}
               onChangeText={setLastNameM}
+          />
+
+          {/* edad */}
+          <Text style={styles.label}>Edad</Text>
+          <TextInput
+            style={styles.input}
+            value={age}
+            onChangeText={setAge}
+            keyboardType="numeric"
           />
 
           {/* CURP */}

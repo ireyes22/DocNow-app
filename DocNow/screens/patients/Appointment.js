@@ -187,8 +187,6 @@ useEffect(() => {
 
         const yaEvaluada = !opinionSnapshot.empty;
 
-        console.log('CITA:', docCita.id, 'YA EVALUADA:', yaEvaluada);
-
         const doctor = doctorSnap.exists()
           ? doctorSnap.data()
           : null;

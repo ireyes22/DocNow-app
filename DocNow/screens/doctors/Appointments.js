@@ -57,6 +57,7 @@ const Appointments = () => {
 
             return {
               id: docCita.id,
+              pacienteId: cita.pacienteId,
               name:
                 patientDoc?.nombre +
                 " " +
@@ -136,7 +137,8 @@ const Appointments = () => {
             onPress={() =>
             navigation.navigate("CreateNotes", {
               patient: {
-                id: item.id,
+                id: item.pacienteId,
+                citaId: item.id,
                 name: item.name,
                 date: item.date,
                 age: item.age ?? null,
@@ -162,7 +164,7 @@ const Appointments = () => {
               {patients.length > 0 ? (
                 patients.filter(p => p.status !== "finalizada").map(renderArchivades)
               ) : (
-                <Text style={styles.noAppointmentsText}>No tienes pacientes con citas hoy</Text>
+                <Text style={styles.noAppointmentsText}>No tienes citas próximas con pacientes.</Text>
               )}
           </ScrollView>
         </View>
@@ -252,6 +254,8 @@ const History = () => {
           onPress={() =>
             navigation.navigate("SeeNotes", {
               patient: {
+                patientId: item.pacienteId,
+                citaId: item.id,
                 name: item.name,
                 date: item.date,
                 service: item.service,
@@ -271,7 +275,7 @@ const History = () => {
         {patients.length > 0 ? (
             patients.map(renderArchivades)
           ) : (
-            <Text style={styles.noAppointmentsText}>No tienes pacientes con citas hoy</Text>
+            <Text style={styles.noAppointmentsText}>No tienes citas próximas con pacientes.</Text>
           )}
         </ScrollView>
     </View>

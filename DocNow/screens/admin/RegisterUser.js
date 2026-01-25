@@ -82,6 +82,7 @@ const RegisterUser = () => {
   const [name, setName] = useState('');
   const [lastNameP, setLastNameP] = useState('');
   const [lastNameM, setLastNameM] = useState('');
+  const [age, setAge] = useState('');
   const [curp, setCurp] = useState('');
   const [sex, setSex] = useState('');
   const [civilStatus, setCivilStatus] = useState('Soltero');
@@ -93,6 +94,8 @@ const RegisterUser = () => {
   // doctor user 
   const [cedulaProfesional, setCedulaProfesional] = useState('');
   const [cedulaEspecialidad, setCedulaEspecialidad] = useState('');
+  const [especialidad, setEspecialidad] = useState('');
+  const [consultorio, setConsultorio] = useState('');
 
   const onChangeDate = (event, selectedDate) => {
     setShowDatePicker(false); 
@@ -122,6 +125,7 @@ const RegisterUser = () => {
         nombre: name,
         apellidoPaterno: lastNameP,
         apellidoMaterno: lastNameM,
+        edad: Number(age),
         curp,
         sexo: sex,
         fechaNacimiento: date,
@@ -134,6 +138,8 @@ const RegisterUser = () => {
           ...(tipo === 'doctor' && {
           cedulaProfesional,
           cedulaEspecialidad,
+          especialidad,
+          consultorio,
         }),
         createdAt: new Date(),
     });
@@ -207,8 +213,28 @@ const RegisterUser = () => {
               onChangeText={setLastNameM}
           />
 
+           {tipo === 'paciente' && (
+            <>
+              {/* edad */}
+              <Text style={styles.label}>Edad</Text>
+              <TextInput
+                style={styles.input}
+                value={age}
+                onChangeText={setAge}
+                keyboardType="numeric"
+              />
+            </>
+          )}
+
           {tipo === 'doctor' && (
             <>
+              <Text style={styles.label}>Especialidad</Text>
+              <TextInput
+                style={styles.input}
+                value={especialidad}
+                onChangeText={setEspecialidad}
+              />
+
               <Text style={styles.label}>Cédula profesional</Text>
               <TextInput
                 style={styles.input}
@@ -223,6 +249,13 @@ const RegisterUser = () => {
                 keyboardType="numeric"
                 value={cedulaEspecialidad}
                 onChangeText={setCedulaEspecialidad}
+              />
+
+              <Text style={styles.label}>Consultorio</Text>
+              <TextInput
+                style={styles.input}
+                value={consultorio}
+                onChangeText={setConsultorio}
               />
             </>
           )}
